@@ -43,8 +43,6 @@ export interface Task {
   id: string;
   goalId: string;
   title: string;
-  description?: string;
-  dueDate?: Date;
   completed: boolean;
   completedAt?: Date;
   priority: TaskPriority;

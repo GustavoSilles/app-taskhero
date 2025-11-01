@@ -9,9 +9,7 @@ import { TaskPriority } from '@/types';
 
 interface TaskFormData {
   title: string;
-  description?: string;
   priority: TaskPriority;
-  dueDate?: Date;
 }
 
 interface TaskFormProps {
@@ -25,9 +23,7 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
   const colors = Colors[colorScheme ?? 'light'];
 
   const [title, setTitle] = useState(initialData?.title || '');
-  const [description, setDescription] = useState(initialData?.description || '');
   const [priority, setPriority] = useState<TaskPriority>(initialData?.priority || 'medium');
-  const [dueDate, setDueDate] = useState<Date | undefined>(initialData?.dueDate);
 
   const handleSubmit = () => {
     if (!title.trim()) {
@@ -37,9 +33,7 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
 
     onSubmit({
       title: title.trim(),
-      description: description.trim() || undefined,
       priority,
-      dueDate,
     });
   };
 
@@ -76,28 +70,6 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
           />
         </View>
 
-        {/* Descrição */}
-        <View style={styles.field}>
-          <ThemedText style={styles.label}>Descrição</ThemedText>
-          <TextInput
-            style={[
-              styles.input,
-              styles.textArea,
-              {
-                backgroundColor: colors.background,
-                borderColor: colors.border,
-                color: colors.text,
-              },
-            ]}
-            value={description}
-            onChangeText={setDescription}
-            placeholder="Detalhes adicionais..."
-            placeholderTextColor={colors.icon}
-            multiline
-            numberOfLines={3}
-          />
-        </View>
-
         {/* Prioridade */}
         <View style={styles.field}>
           <ThemedText style={styles.label}>Prioridade</ThemedText>
@@ -126,31 +98,6 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
-
-        {/* Data Limite */}
-        <View style={styles.field}>
-          <ThemedText style={styles.label}>Data Limite (Opcional)</ThemedText>
-          <TouchableOpacity
-            style={[styles.dateButton, { borderColor: colors.border }]}
-            onPress={() => {
-              // Aqui você pode implementar um date picker
-              const tomorrow = new Date();
-              tomorrow.setDate(tomorrow.getDate() + 1);
-              setDueDate(tomorrow);
-            }}>
-            <IconSymbol name="calendar" size={20} color={colors.icon} />
-            <ThemedText style={styles.dateText}>
-              {dueDate ? dueDate.toLocaleDateString() : 'Selecionar data'}
-            </ThemedText>
-          </TouchableOpacity>
-          {dueDate && (
-            <TouchableOpacity onPress={() => setDueDate(undefined)}>
-              <ThemedText style={[styles.clearDate, { color: colors.error }]}>
-                Remover data
-              </ThemedText>
-            </TouchableOpacity>
-          )}
         </View>
 
         {/* Botões */}

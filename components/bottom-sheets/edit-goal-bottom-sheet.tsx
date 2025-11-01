@@ -1,22 +1,31 @@
 import React, { useMemo, forwardRef } from 'react';
 import { StyleSheet } from 'react-native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
-import { TaskForm } from '../forms/task-form';
+import { GoalForm } from '../forms/goal-form';
 import { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 
-interface CreateTaskBottomSheetProps {
-  onSubmit: (data: any) => void;
-  onClose: () => void;
+interface GoalData {
+  title: string;
+  description: string;
+  startDate: Date;
+  endDate: Date;
 }
 
-export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomSheetProps>(
-  ({ onSubmit, onClose }, ref) => {
+interface EditGoalBottomSheetProps {
+  goalData: GoalData;
+  onSubmit: (data: GoalData) => void;
+  onClose: () => void;
+  onChange?: (index: number) => void;
+}
+
+export const EditGoalBottomSheet = forwardRef<BottomSheet, EditGoalBottomSheetProps>(
+  ({ goalData, onSubmit, onClose, onChange }, ref) => {
     const { colorScheme } = useTheme();
     const colors = Colors[colorScheme ?? 'light'];
     
-    const snapPoints = useMemo(() => ['50%', '65%'], []);
+    const snapPoints = useMemo(() => ['85%', '95%'], []);
 
     const renderBackdrop = (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -35,18 +44,23 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         onClose={onClose}
+        onChange={onChange}
         handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.primary }]}
         backgroundStyle={[styles.background, { backgroundColor: colors.surface }]}
       >
         <BottomSheetView style={styles.container}>
-          <TaskForm onSubmit={onSubmit} onCancel={onClose} />
+          <GoalForm 
+            initialData={goalData}
+            onSubmit={onSubmit} 
+            onCancel={onClose} 
+          />
         </BottomSheetView>
       </BottomSheet>
     );
   }
 );
 
-CreateTaskBottomSheet.displayName = 'CreateTaskBottomSheet';
+EditGoalBottomSheet.displayName = 'EditGoalBottomSheet';
 
 const styles = StyleSheet.create({
   container: {

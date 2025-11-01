@@ -7,6 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { GoalStatusBadge } from '@/components/goal-status-badge';
 import { TaskItem } from '@/components/task-item';
 import { CreateTaskBottomSheet } from '@/components/bottom-sheets/create-task-bottom-sheet';
+import { EditGoalBottomSheet } from '@/components/bottom-sheets/edit-goal-bottom-sheet';
 import { EmptyState } from '@/components/empty-state';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
@@ -24,8 +25,9 @@ export default function GoalDetailScreen() {
 
   const [tasks, setTasks] = useState(getTasksByGoalId(id || ''));
   
-  // Ref para o Bottom Sheet
+  // Refs para os Bottom Sheets
   const taskBottomSheetRef = useRef<BottomSheet>(null);
+  const editGoalBottomSheetRef = useRef<BottomSheet>(null);
 
   // Buscar meta (depois vem do backend)
   const goal = mockGoals.find((g) => g.id === id);
@@ -87,13 +89,22 @@ export default function GoalDetailScreen() {
     );
   };
 
-  // Funções para abrir/fechar Bottom Sheet
+  // Funções para abrir/fechar Bottom Sheet de Tarefa
   const handleOpenTaskBottomSheet = useCallback(() => {
     taskBottomSheetRef.current?.snapToIndex(1);
   }, []);
 
   const handleCloseTaskBottomSheet = useCallback(() => {
     taskBottomSheetRef.current?.close();
+  }, []);
+
+  // Funções para abrir/fechar Bottom Sheet de Editar Meta
+  const handleOpenEditGoalBottomSheet = useCallback(() => {
+    editGoalBottomSheetRef.current?.snapToIndex(1);
+  }, []);
+
+  const handleCloseEditGoalBottomSheet = useCallback(() => {
+    editGoalBottomSheetRef.current?.close();
   }, []);
 
   const handleToggleTask = (taskId: string) => {
@@ -111,6 +122,13 @@ export default function GoalDetailScreen() {
     handleCloseTaskBottomSheet();
     Alert.alert('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
   }, [handleCloseTaskBottomSheet]);
+
+  const handleEditGoal = useCallback((goalData: any) => {
+    console.log('Meta editada:', goalData);
+    handleCloseEditGoalBottomSheet();
+    Alert.alert('Sucesso', 'Meta atualizada com sucesso!');
+    // Aqui você faria a chamada para a API para atualizar a meta
+  }, [handleCloseEditGoalBottomSheet]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>
@@ -217,7 +235,7 @@ export default function GoalDetailScreen() {
       <View style={styles.actions}>
         <TouchableOpacity
           style={[styles.actionButton, { backgroundColor: colors.primary }]}
-          onPress={() => console.log('Editar meta')}>
+          onPress={handleOpenEditGoalBottomSheet}>
           <IconSymbol name="pencil" size={20} color="#fff" />
           <ThemedText style={styles.actionButtonText}>Editar Meta</ThemedText>
         </TouchableOpacity>
@@ -267,6 +285,19 @@ export default function GoalDetailScreen() {
           ref={taskBottomSheetRef}
           onSubmit={handleAddTask}
           onClose={handleCloseTaskBottomSheet}
+        />
+
+        {/* Bottom Sheet para editar meta */}
+        <EditGoalBottomSheet
+          ref={editGoalBottomSheetRef}
+          goalData={{
+            title: goal.title,
+            description: goal.description,
+            startDate: goal.startDate,
+            endDate: goal.endDate,
+          }}
+          onSubmit={handleEditGoal}
+          onClose={handleCloseEditGoalBottomSheet}
         />
       </GestureHandlerRootView>
     </SafeAreaView>

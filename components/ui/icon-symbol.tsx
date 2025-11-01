@@ -43,6 +43,8 @@ const MAPPING: IconMapping = {
   'xmark.circle.fill': 'cancel',
   'chart.bar': 'bar-chart',
   tag: 'label',
+  checklist: 'checklist',
+  trash: 'delete',
 } as const;
 
 /**

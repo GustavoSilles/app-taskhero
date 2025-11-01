@@ -8,8 +8,6 @@ export const mockTasks: Task[] = [
     id: 't1',
     goalId: '1',
     title: 'Assistir módulo 1: Introdução ao React Native',
-    description: 'Compreender os conceitos básicos e configurar ambiente',
-    dueDate: new Date(2025, 8, 7),
     completed: true,
     completedAt: new Date(2025, 8, 5),
     priority: 'high' as TaskPriority,
@@ -19,8 +17,6 @@ export const mockTasks: Task[] = [
     id: 't2',
     goalId: '1',
     title: 'Completar exercícios do módulo 1',
-    description: 'Fazer todos os exercícios práticos propostos',
-    dueDate: new Date(2025, 8, 10),
     completed: true,
     completedAt: new Date(2025, 8, 9),
     priority: 'high' as TaskPriority,
@@ -30,8 +26,6 @@ export const mockTasks: Task[] = [
     id: 't3',
     goalId: '1',
     title: 'Assistir módulo 2: Componentes e Props',
-    description: 'Aprender sobre componentes funcionais e props',
-    dueDate: new Date(2025, 8, 15),
     completed: true,
     completedAt: new Date(2025, 8, 14),
     priority: 'high' as TaskPriority,
@@ -41,8 +35,6 @@ export const mockTasks: Task[] = [
     id: 't4',
     goalId: '1',
     title: 'Criar primeiro aplicativo: Lista de Tarefas',
-    description: 'Desenvolver um app simples de lista de tarefas',
-    dueDate: new Date(2025, 8, 25),
     completed: true,
     completedAt: new Date(2025, 8, 24),
     priority: 'medium' as TaskPriority,
@@ -52,8 +44,6 @@ export const mockTasks: Task[] = [
     id: 't5',
     goalId: '1',
     title: 'Assistir módulo 3: Navegação',
-    description: 'Aprender React Navigation e diferentes tipos de navegadores',
-    dueDate: new Date(2025, 9, 5),
     completed: false,
     priority: 'high' as TaskPriority,
     status: 'pending' as TaskStatus,
@@ -62,8 +52,6 @@ export const mockTasks: Task[] = [
     id: 't6',
     goalId: '1',
     title: 'Implementar navegação no app de tarefas',
-    description: 'Adicionar múltiplas telas com navegação',
-    dueDate: new Date(2025, 9, 10),
     completed: false,
     priority: 'medium' as TaskPriority,
     status: 'pending' as TaskStatus,
@@ -72,7 +60,6 @@ export const mockTasks: Task[] = [
     id: 't7',
     goalId: '1',
     title: 'Assistir módulo 4: Estado e Hooks',
-    dueDate: new Date(2025, 9, 15),
     completed: false,
     priority: 'high' as TaskPriority,
     status: 'pending' as TaskStatus,
@@ -81,7 +68,6 @@ export const mockTasks: Task[] = [
     id: 't8',
     goalId: '1',
     title: 'Criar segundo aplicativo: App de Receitas',
-    dueDate: new Date(2025, 10, 1),
     completed: false,
     priority: 'medium' as TaskPriority,
     status: 'pending' as TaskStatus,
@@ -90,7 +76,6 @@ export const mockTasks: Task[] = [
     id: 't9',
     goalId: '1',
     title: 'Assistir módulo 5: APIs e Integração',
-    dueDate: new Date(2025, 10, 7),
     completed: false,
     priority: 'high' as TaskPriority,
     status: 'pending' as TaskStatus,
@@ -99,7 +84,6 @@ export const mockTasks: Task[] = [
     id: 't10',
     goalId: '1',
     title: 'Criar terceiro aplicativo: App completo com backend',
-    dueDate: new Date(2025, 10, 15),
     completed: false,
     priority: 'high' as TaskPriority,
     status: 'pending' as TaskStatus,
@@ -175,7 +159,6 @@ export const mockTasks: Task[] = [
     id: 't18',
     goalId: '4',
     title: 'Ler "Deep Work"',
-    dueDate: new Date(2025, 10, 30),
     completed: false,
     priority: 'medium' as TaskPriority,
     status: 'pending' as TaskStatus,
@@ -208,14 +191,7 @@ export function sortTasksByPriority(tasks: Task[]): Task[] {
   );
 }
 
-// Função para ordenar tarefas por data de vencimento
-export function sortTasksByDueDate(tasks: Task[]): Task[] {
-  return [...tasks].sort((a, b) => {
-    if (!a.dueDate) return 1;
-    if (!b.dueDate) return -1;
-    return a.dueDate.getTime() - b.dueDate.getTime();
-  });
-}
+
 
 // Função para calcular estatísticas de tarefas
 export function getTaskStatistics(tasks: Task[]) {
