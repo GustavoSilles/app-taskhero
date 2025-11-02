@@ -160,7 +160,12 @@ export default function ProfileScreen() {
           </ThemedText>
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.badgesScrollContent}
+          style={styles.badgesScroll}
+        >
           {badges.map((badge) => (
             <RewardBadge key={badge.id} {...badge} />
           ))}
@@ -221,6 +226,13 @@ const styles = StyleSheet.create({
   badgeCount: {
     fontSize: 14,
     opacity: 0.7,
+  },
+  badgesScroll: {
+    marginHorizontal: -20,
+  },
+  badgesScrollContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   statsGrid: {
     flexDirection: 'row',

@@ -1,7 +1,8 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Image } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { RewardBadge } from '@/components/reward-badge';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { useState } from 'react';
@@ -55,16 +56,57 @@ const mockBadges = [
   },
 ];
 
-// Avatares disponíveis
+// Avatares disponíveis - Heróis
 const mockAvatars = [
-  { id: '1', emoji: '😊', name: 'Feliz', unlocked: true, cost: 0 },
-  { id: '2', emoji: '🎯', name: 'Focado', unlocked: true, cost: 0 },
-  { id: '3', emoji: '🚀', name: 'Produtivo', unlocked: true, cost: 0 },
-  { id: '4', emoji: '⭐', name: 'Estrela', unlocked: false, cost: 50 },
-  { id: '5', emoji: '🏆', name: 'Campeão', unlocked: false, cost: 100 },
-  { id: '6', emoji: '🔥', name: 'Em Chamas', unlocked: false, cost: 100 },
-  { id: '7', emoji: '💎', name: 'Diamante', unlocked: false, cost: 200 },
-  { id: '8', emoji: '👑', name: 'Rei', unlocked: false, cost: 500 },
+  { 
+    id: '1', 
+    image: require('@/assets/imagens-heroes/homem-aranha.jpg'), 
+    name: 'Homem-Aranha', 
+    unlocked: true, 
+    cost: 0 
+  },
+  { 
+    id: '2', 
+    image: require('@/assets/imagens-heroes/flash.jpg'), 
+    name: 'Flash', 
+    unlocked: true, 
+    cost: 0 
+  },
+  { 
+    id: '3', 
+    image: require('@/assets/imagens-heroes/arqueiro-verde.jpg'), 
+    name: 'Arqueiro Verde', 
+    unlocked: true, 
+    cost: 0 
+  },
+  { 
+    id: '4', 
+    image: require('@/assets/imagens-heroes/deadpool.jpg'), 
+    name: 'Deadpool', 
+    unlocked: false, 
+    cost: 50 
+  },
+  { 
+    id: '5', 
+    image: require('@/assets/imagens-heroes/demolidor.jpg'), 
+    name: 'Demolidor', 
+    unlocked: false, 
+    cost: 100 
+  },
+  { 
+    id: '6', 
+    image: require('@/assets/imagens-heroes/invencivel.jpg'), 
+    name: 'Invencível', 
+    unlocked: false, 
+    cost: 150 
+  },
+  { 
+    id: '7', 
+    image: require('@/assets/imagens-heroes/homem-aranho-preto.jpg'), 
+    name: 'Aranha Preto', 
+    unlocked: false, 
+    cost: 200 
+  },
 ];
 
 export default function RewardsScreen() {
@@ -84,7 +126,10 @@ export default function RewardsScreen() {
       {/* Seção de Emblemas */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <ThemedText type="subtitle">🏆 Emblemas</ThemedText>
+          <View style={styles.sectionTitleContainer}>
+            <IconSymbol name="trophy.fill" size={20} color={colors.primary} />
+            <ThemedText type="subtitle" style={styles.sectionTitleText}>Emblemas</ThemedText>
+          </View>
           <ThemedText style={styles.progressText}>
             {unlockedBadges}/{totalBadges}
           </ThemedText>
@@ -93,7 +138,12 @@ export default function RewardsScreen() {
           Conquiste emblemas completando desafios especiais
         </ThemedText>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.badgesScroll}>
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          style={styles.badgesScroll}
+          contentContainerStyle={styles.badgesScrollContent}
+        >
           {badges.map((badge) => (
             <RewardBadge key={badge.id} {...badge} />
           ))}
@@ -103,7 +153,10 @@ export default function RewardsScreen() {
       {/* Seção de Avatares */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <ThemedText type="subtitle">👤 Avatares</ThemedText>
+          <View style={styles.sectionTitleContainer}>
+            <IconSymbol name="person.circle.fill" size={20} color={colors.primary} />
+            <ThemedText type="subtitle" style={styles.sectionTitleText}>Avatares</ThemedText>
+          </View>
           <ThemedText style={styles.progressText}>
             {unlockedAvatars}/{totalAvatars}
           </ThemedText>
@@ -123,28 +176,37 @@ export default function RewardsScreen() {
                   borderColor: selectedAvatar === avatar.id ? colors.primary : colors.border,
                   borderWidth: selectedAvatar === avatar.id ? 3 : 1,
                 },
-                !avatar.unlocked && styles.avatarLocked,
               ]}
               onPress={() => avatar.unlocked && setSelectedAvatar(avatar.id)}
               disabled={!avatar.unlocked}>
-              <ThemedText style={styles.avatarEmoji}>{avatar.emoji}</ThemedText>
-              <ThemedText style={styles.avatarName}>{avatar.name}</ThemedText>
-              
-              {/* Preço em TaskCoins */}
-              {!avatar.unlocked && avatar.cost > 0 && (
-                <View style={styles.costBadge}>
-                  <ThemedText style={styles.costText}>🪙 {avatar.cost}</ThemedText>
-                </View>
-              )}
-              
-              {!avatar.unlocked && (
-                <View style={styles.lockOverlay}>
-                  <ThemedText style={styles.lockIcon}>🔒</ThemedText>
-                </View>
-              )}
+              <View style={styles.avatarImageContainer}>
+                <Image 
+                  source={avatar.image} 
+                  style={styles.avatarImage}
+                  resizeMode="cover"
+                />
+                {/* Overlay de bloqueio sobre a imagem */}
+                {!avatar.unlocked && (
+                  <View style={styles.lockOverlay}>
+                    <IconSymbol name="lock.fill" size={24} color="#fff" />
+                  </View>
+                )}
+                {/* Preço em TaskCoins - fora do backdrop */}
+                {!avatar.unlocked && avatar.cost > 0 && (
+                  <View style={styles.costBadge}>
+                    <View style={styles.costContent}>
+                      <IconSymbol name="dollarsign.circle.fill" size={15} color="#000000" />
+                      <ThemedText style={styles.costText}>{avatar.cost}</ThemedText>
+                    </View>
+                  </View>
+                )}
+              </View>
+              <ThemedText style={styles.avatarName} numberOfLines={1}>
+                {avatar.name}
+              </ThemedText>
               {selectedAvatar === avatar.id && avatar.unlocked && (
                 <View style={[styles.selectedBadge, { backgroundColor: colors.primary }]}>
-                  <ThemedText style={styles.selectedText}>✓</ThemedText>
+                  <IconSymbol name="checkmark" size={12} color="#FFFFFF" />
                 </View>
               )}
             </TouchableOpacity>
@@ -154,33 +216,46 @@ export default function RewardsScreen() {
 
       {/* Como Desbloquear */}
       <View style={styles.section}>
-        <ThemedText type="subtitle" style={styles.sectionTitle}>
-          📖 Como Desbloquear Recompensas
-        </ThemedText>
+        <View style={[styles.sectionTitleContainer, styles.sectionTitleWithSpacing]}>
+          <IconSymbol name="book" size={20} color={colors.primary} />
+          <ThemedText type="subtitle" style={[styles.sectionTitle, styles.sectionTitleText]}>Como Desbloquear Recompensas</ThemedText>
+        </View>
 
         <ThemedView style={styles.infoCard}>
-          <ThemedText style={styles.infoTitle}>🏆 Emblemas</ThemedText>
+          <View style={styles.infoTitleContainer}>
+            <IconSymbol name="trophy.fill" size={16} color={colors.primary} />
+            <ThemedText style={styles.infoTitle}>Emblemas</ThemedText>
+          </View>
           <ThemedText style={styles.infoDescription}>
             Complete desafios específicos como criar sua primeira meta, manter sequências ou atingir marcos de tarefas
           </ThemedText>
         </ThemedView>
 
         <ThemedView style={styles.infoCard}>
-          <ThemedText style={styles.infoTitle}>👤 Avatares</ThemedText>
+          <View style={styles.infoTitleContainer}>
+            <IconSymbol name="person.circle.fill" size={16} color={colors.primary} />
+            <ThemedText style={styles.infoTitle}>Avatares</ThemedText>
+          </View>
           <ThemedText style={styles.infoDescription}>
-            Compre avatares usando TaskCoins 🪙 que você ganha completando metas (+50 coins) e tarefas (+10 coins)
+            Compre avatares usando TaskCoins que você ganha completando metas (+50 coins) e tarefas (+10 coins)
           </ThemedText>
         </ThemedView>
 
         <ThemedView style={styles.infoCard}>
-          <ThemedText style={styles.infoTitle}>⬆️ Experiência (XP)</ThemedText>
+          <View style={styles.infoTitleContainer}>
+            <IconSymbol name="arrow.up.circle.fill" size={16} color={colors.primary} />
+            <ThemedText style={styles.infoTitle}>Experiência (XP)</ThemedText>
+          </View>
           <ThemedText style={styles.infoDescription}>
             Ganhe XP completando tarefas (+10 XP) e metas (+100 XP). Ao subir de nível, você desbloqueia emblemas especiais!
           </ThemedText>
         </ThemedView>
 
         <ThemedView style={styles.infoCard}>
-          <ThemedText style={styles.infoTitle}>� Dica</ThemedText>
+          <View style={styles.infoTitleContainer}>
+            <IconSymbol name="lightbulb.fill" size={16} color={colors.primary} />
+            <ThemedText style={styles.infoTitle}>Dica</ThemedText>
+          </View>
           <ThemedText style={styles.infoDescription}>
             Mantenha-se consistente! Complete tarefas diariamente para desbloquear recompensas exclusivas
           </ThemedText>
@@ -204,6 +279,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
+  sectionTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    justifyContent: 'flex-start',
+  },
+  sectionTitleWithSpacing: {
+    marginBottom: 16,
+  },
+  sectionTitleText: {
+    marginBottom: 0,
+    lineHeight: 24,
+  },
   sectionDescription: {
     fontSize: 14,
     opacity: 0.7,
@@ -218,7 +306,10 @@ const styles = StyleSheet.create({
   },
   badgesScroll: {
     marginHorizontal: -20,
+  },
+  badgesScrollContent: {
     paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   // Estilos dos Avatares
   avatarsGrid: {
@@ -228,39 +319,69 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   avatarItem: {
-    width: '22%',
-    aspectRatio: 1,
-    borderRadius: 12,
-    padding: 8,
-    marginBottom: 12,
+    width: '31%',
+    aspectRatio: 0.7,
+    borderRadius: 16,
+    padding: 10,
+    marginBottom: 16,
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  avatarIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    position: 'relative',
-  },
-  avatarEmoji: {
-    fontSize: 32,
     marginBottom: 4,
   },
-  avatarName: {
-    fontSize: 11,
-    textAlign: 'center',
-    fontWeight: '500',
+  avatarImageContainer: {
+    width: '100%',
+    flex: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    marginBottom: 4,
   },
-  avatarLocked: {
-    opacity: 0.4,
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 8,
+  },
+  avatarName: {
+    fontSize: 10,
+    textAlign: 'center',
+    fontWeight: '600',
+    paddingHorizontal: 2,
   },
   costBadge: {
     position: 'absolute',
-    bottom: 4,
-    backgroundColor: 'rgba(255, 193, 7, 0.95)',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
+    bottom: 6,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  costContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(255, 193, 7, 0.64)',
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
   },
   costText: {
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: 'bold',
-    color: '#1C1C1C',
+    color: '#000000',
   },
   lockOverlay: {
     position: 'absolute',
@@ -270,26 +391,20 @@ const styles = StyleSheet.create({
     bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    borderRadius: 12,
-  },
-  lockIcon: {
-    fontSize: 24,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 8,
+    zIndex: 1,
   },
   selectedBadge: {
     position: 'absolute',
-    top: 4,
-    right: 4,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    top: 12,
+    right: 12,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  selectedText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: 'bold',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
   // Cards de Informação
   infoCard: {
@@ -305,7 +420,13 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 16,
     fontWeight: '600',
-    marginBottom: 4,
+    marginBottom: 0,
+  },
+  infoTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
   },
   infoDescription: {
     opacity: 0.7,
