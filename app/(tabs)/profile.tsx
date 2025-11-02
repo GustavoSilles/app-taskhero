@@ -1,25 +1,49 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
+import { useRef } from 'react';
+import BottomSheet from '@gorhom/bottom-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { UserProfileHeader } from '@/components/user-profile-header';
 import { RewardBadge } from '@/components/reward-badge';
 import { StatsCard } from '@/components/stats-card';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { mockUser } from '@/mocks/user';
 import { mockGoals } from '@/mocks/goals';
 import { BADGE_REQUIREMENTS } from '@/constants/gamification';
 import { useAuth } from '@/contexts/auth-context';
+import { EditProfileBottomSheet } from '@/components/bottom-sheets/edit-profile-bottom-sheet';
 
 export default function ProfileScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { signOut, user } = useAuth();
+  const editProfileBottomSheetRef = useRef<BottomSheet>(null);
 
   // Calcular estatísticas
   const totalGoals = mockGoals.length;
   const completedGoals = mockUser.goalsCompletedOnTime + mockUser.goalsCompletedLate;
+
+  const handleEditProfile = () => {
+    editProfileBottomSheetRef.current?.snapToIndex(0);
+  };
+
+  const handleSaveProfile = (data: any) => {
+    console.log('Salvar perfil:', data);
+    // TODO: Implementar atualização do perfil no backend
+    Alert.alert(
+      'Perfil Atualizado',
+      'Suas informações foram atualizadas com sucesso!',
+      [{ text: 'OK' }]
+    );
+    editProfileBottomSheetRef.current?.close();
+  };
+
+  const handleCloseEditProfile = () => {
+    editProfileBottomSheetRef.current?.close();
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -74,20 +98,21 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Cabeçalho do Perfil */}
-      <View style={styles.section}>
-        <UserProfileHeader
-          name={user?.name || mockUser.name}
-          email={user?.email || mockUser.email}
-          avatarUrl={user?.avatarUrl || mockUser.avatarUrl}
-          level={user?.level || mockUser.level}
-          totalPoints={user?.totalPoints || mockUser.totalPoints}
-          taskCoins={mockUser.taskCoins}
-          goalsCompleted={completedGoals}
-          onEditPress={() => console.log('Editar perfil')}
-        />
-      </View>
+    <>
+      <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        {/* Cabeçalho do Perfil */}
+        <View style={styles.section}>
+          <UserProfileHeader
+            name={user?.name || mockUser.name}
+            email={user?.email || mockUser.email}
+            avatarUrl={user?.avatarUrl || mockUser.avatarUrl}
+            level={user?.level || mockUser.level}
+            totalPoints={user?.totalPoints || mockUser.totalPoints}
+            taskCoins={mockUser.taskCoins}
+            goalsCompleted={completedGoals}
+            onEditPress={handleEditProfile}
+          />
+        </View>
 
       {/* Estatísticas Detalhadas */}
       <View style={styles.section}>
@@ -143,19 +168,16 @@ export default function ProfileScreen() {
       </View>
 
       {/* Botões de Ação */}
-      <View style={styles.section}>
+      <View style={[styles.section, { marginTop: 20 }]}>
         <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }]}
-          onPress={() => console.log('Configurações')}>
-          <ThemedText style={styles.buttonText}>⚙️ Configurações</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.button, styles.logoutButton, { borderColor: colors.error }]}
+          style={[styles.button, styles.logoutButton, { borderColor: colors.error, marginBottom: 0 }]}
           onPress={handleLogout}>
-          <ThemedText style={[styles.buttonText, { color: colors.error }]}>
-            🚪 Sair da Conta
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+            <IconSymbol name="arrow.right.circle.fill" size={20} color={colors.error} />
+            <ThemedText style={[styles.buttonText, { color: colors.error }]}>
+              Sair da Conta
+            </ThemedText>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -164,6 +186,19 @@ export default function ProfileScreen() {
         <ThemedText style={styles.footerText}>© 2025 - Todos os direitos reservados</ThemedText>
       </View>
     </ScrollView>
+
+      {/* Bottom Sheet de Edição de Perfil */}
+      <EditProfileBottomSheet
+        ref={editProfileBottomSheetRef}
+        initialData={{
+          name: user?.name || mockUser.name,
+          email: user?.email || mockUser.email,
+          avatarUrl: user?.avatarUrl || mockUser.avatarUrl,
+        }}
+        onSubmit={handleSaveProfile}
+        onClose={handleCloseEditProfile}
+      />
+    </>
   );
 }
 

@@ -81,9 +81,12 @@ export function UserProfileHeader({
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
         <View style={styles.statItem}>
-          <ThemedText type="defaultSemiBold" style={styles.statValue}>
-            🪙 {taskCoins}
-          </ThemedText>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 4 }}>
+            <IconSymbol name="dollarsign.circle.fill" size={24} color="#F59E0B" />
+            <ThemedText type="defaultSemiBold" style={styles.coinValue}>
+              {taskCoins}
+            </ThemedText>
+          </View>
           <ThemedText style={styles.statLabel}>TaskCoins</ThemedText>
         </View>
 
@@ -171,6 +174,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     marginBottom: 4,
+  },
+  coinValue: {
+    fontSize: 24,
   },
   statLabel: {
     fontSize: 12,

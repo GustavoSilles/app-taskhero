@@ -40,7 +40,7 @@ export default function AboutScreen() {
         <Logo variant="full" size="large" />
         <ThemedText style={styles.version}>Versão 1.0.0</ThemedText>
         <ThemedText style={styles.tagline}>
-          Transforme suas metas em conquistas! 🎯
+          Transforme suas metas em conquistas!
         </ThemedText>
       </View>
 

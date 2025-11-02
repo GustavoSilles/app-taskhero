@@ -45,6 +45,15 @@ const MAPPING: IconMapping = {
   tag: 'label',
   checklist: 'checklist',
   trash: 'delete',
+  'dollarsign.circle.fill': 'monetization-on',
+  'checkmark.seal.fill': 'verified',
+  'flame.fill': 'local-fire-department',
+  'flame.circle.fill': 'local-fire-department',
+  'sunrise.fill': 'light-mode',
+  'moon.stars.fill': 'dark-mode',
+  'crown.fill': 'grade',
+  'flag.fill': 'flag',
+  'arrow.up.circle.fill': 'trending-up',
 } as const;
 
 /**

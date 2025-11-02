@@ -1,5 +1,6 @@
 import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './themed-text';
+import { IconSymbol } from './ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 
@@ -25,7 +26,7 @@ export function LevelCoinsHeader({
     <View style={styles.container}>
       {/* TaskCoins */}
       <View style={[styles.coinsContainer, { backgroundColor: 'rgba(255, 193, 7, 0.15)' }]}>
-        <ThemedText style={styles.coinEmoji}>🪙</ThemedText>
+        <IconSymbol name="dollarsign.circle.fill" size={16} color="#F59E0B" />
         <ThemedText type="defaultSemiBold" style={styles.coinValue}>
           {taskCoins}
         </ThemedText>
@@ -81,9 +82,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 16,
-  },
-  coinEmoji: {
-    fontSize: 14,
   },
   coinValue: {
     fontSize: 13,
