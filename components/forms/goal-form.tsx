@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, SafeAreaView } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
 import { IconSymbol } from '../ui/icon-symbol';
@@ -25,10 +26,26 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
 
   const [title, setTitle] = useState(initialData?.title || '');
   const [description, setDescription] = useState(initialData?.description || '');
-  const [startDate] = useState(initialData?.startDate || new Date());
-  const [endDate] = useState(
+  const [startDate, setStartDate] = useState(initialData?.startDate || new Date());
+  const [endDate, setEndDate] = useState(
     initialData?.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
   );
+  const [showStartDatePicker, setShowStartDatePicker] = useState(false);
+  const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+
+  const handleStartDateChange = (event: any, selectedDate?: Date) => {
+    setShowStartDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setStartDate(selectedDate);
+    }
+  };
+
+  const handleEndDateChange = (event: any, selectedDate?: Date) => {
+    setShowEndDatePicker(Platform.OS === 'ios');
+    if (selectedDate) {
+      setEndDate(selectedDate);
+    }
+  };
 
   const handleSubmit = () => {
     if (!title.trim()) {
@@ -108,10 +125,7 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
           <ThemedText style={styles.label}>Data Inicial *</ThemedText>
           <TouchableOpacity
             style={[styles.dateButton, { borderColor: colors.border }]}
-            onPress={() => {
-              // Implementar date picker
-              console.log('Abrir date picker para data inicial');
-            }}>
+            onPress={() => setShowStartDatePicker(true)}>
             <IconSymbol name="calendar" size={20} color={colors.icon} />
             <ThemedText style={styles.dateText}>
               {startDate.toLocaleDateString('pt-BR', {
@@ -121,16 +135,22 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
               })}
             </ThemedText>
           </TouchableOpacity>
+          {showStartDatePicker && (
+            <DateTimePicker
+              value={startDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleStartDateChange}
+              locale="pt-BR"
+            />
+          )}
         </View>
 
         <View style={styles.field}>
           <ThemedText style={styles.label}>Data Final *</ThemedText>
           <TouchableOpacity
             style={[styles.dateButton, { borderColor: colors.border }]}
-            onPress={() => {
-              // Implementar date picker
-              console.log('Abrir date picker para data final');
-            }}>
+            onPress={() => setShowEndDatePicker(true)}>
             <IconSymbol name="flag" size={20} color={colors.icon} />
             <ThemedText style={styles.dateText}>
               {endDate.toLocaleDateString('pt-BR', {
@@ -140,6 +160,16 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
               })}
             </ThemedText>
           </TouchableOpacity>
+          {showEndDatePicker && (
+            <DateTimePicker
+              value={endDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+              onChange={handleEndDateChange}
+              locale="pt-BR"
+              minimumDate={startDate}
+            />
+          )}
           <ThemedText style={styles.hint}>
             Prazo: {Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))}{' '}
             dias

@@ -32,6 +32,37 @@ export default function GoalDetailScreen() {
   // Buscar meta (depois vem do backend)
   const goal = mockGoals.find((g) => g.id === id);
 
+  // Funções para abrir/fechar Bottom Sheet de Tarefa
+  const handleOpenTaskBottomSheet = useCallback(() => {
+    taskBottomSheetRef.current?.snapToIndex(1);
+  }, []);
+
+  const handleCloseTaskBottomSheet = useCallback(() => {
+    taskBottomSheetRef.current?.close();
+  }, []);
+
+  // Funções para abrir/fechar Bottom Sheet de Editar Meta
+  const handleOpenEditGoalBottomSheet = useCallback(() => {
+    editGoalBottomSheetRef.current?.snapToIndex(1);
+  }, []);
+
+  const handleCloseEditGoalBottomSheet = useCallback(() => {
+    editGoalBottomSheetRef.current?.close();
+  }, []);
+
+  const handleAddTask = useCallback((taskData: any) => {
+    console.log('Nova tarefa:', taskData);
+    handleCloseTaskBottomSheet();
+    Alert.alert('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
+  }, [handleCloseTaskBottomSheet]);
+
+  const handleEditGoal = useCallback((goalData: any) => {
+    console.log('Meta editada:', goalData);
+    handleCloseEditGoalBottomSheet();
+    Alert.alert('Sucesso', 'Meta atualizada com sucesso!');
+    // Aqui você faria a chamada para a API para atualizar a meta
+  }, [handleCloseEditGoalBottomSheet]);
+
   if (!goal) {
     return (
       <ThemedView style={styles.container}>
@@ -89,24 +120,6 @@ export default function GoalDetailScreen() {
     );
   };
 
-  // Funções para abrir/fechar Bottom Sheet de Tarefa
-  const handleOpenTaskBottomSheet = useCallback(() => {
-    taskBottomSheetRef.current?.snapToIndex(1);
-  }, []);
-
-  const handleCloseTaskBottomSheet = useCallback(() => {
-    taskBottomSheetRef.current?.close();
-  }, []);
-
-  // Funções para abrir/fechar Bottom Sheet de Editar Meta
-  const handleOpenEditGoalBottomSheet = useCallback(() => {
-    editGoalBottomSheetRef.current?.snapToIndex(1);
-  }, []);
-
-  const handleCloseEditGoalBottomSheet = useCallback(() => {
-    editGoalBottomSheetRef.current?.close();
-  }, []);
-
   const handleToggleTask = (taskId: string) => {
     setTasks((prevTasks) =>
       prevTasks.map((task) =>
@@ -116,19 +129,6 @@ export default function GoalDetailScreen() {
       )
     );
   };
-
-  const handleAddTask = useCallback((taskData: any) => {
-    console.log('Nova tarefa:', taskData);
-    handleCloseTaskBottomSheet();
-    Alert.alert('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
-  }, [handleCloseTaskBottomSheet]);
-
-  const handleEditGoal = useCallback((goalData: any) => {
-    console.log('Meta editada:', goalData);
-    handleCloseEditGoalBottomSheet();
-    Alert.alert('Sucesso', 'Meta atualizada com sucesso!');
-    // Aqui você faria a chamada para a API para atualizar a meta
-  }, [handleCloseEditGoalBottomSheet]);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>

@@ -1,8 +1,7 @@
 import React, { useMemo, forwardRef } from 'react';
 import { StyleSheet } from 'react-native';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { GoalForm } from '../forms/goal-form';
-import { BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 

@@ -1,6 +1,5 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Logo } from '@/components/logo';
 import { Colors } from '@/constants/theme';

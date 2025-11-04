@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
-import { IconSymbol } from '../ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { TaskPriority } from '@/types';

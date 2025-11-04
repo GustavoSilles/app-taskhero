@@ -104,8 +104,14 @@ export default function HomeScreen() {
           <TouchableOpacity
             onPress={() => setShowFilters(!showFilters)}
             style={styles.filterButton}>
+            <Ionicons 
+              name={showFilters ? "close" : "funnel"} 
+              size={18} 
+              color={colors.primary} 
+              style={{ marginRight: 6 }}
+            />
             <ThemedText style={[styles.filterButtonText, { color: colors.primary }]}>
-              {showFilters ? '✕ Fechar' : '⚙ Filtros'}
+              {showFilters ? 'Fechar' : 'Filtros'}
             </ThemedText>
           </TouchableOpacity>
         </View>
@@ -195,6 +201,8 @@ const styles = StyleSheet.create({
   },
   filterButton: {
     padding: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   filterButtonText: {
     fontSize: 14,

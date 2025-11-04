@@ -3,7 +3,6 @@ import { router } from 'expo-router';
 import { useRef } from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { UserProfileHeader } from '@/components/user-profile-header';
 import { RewardBadge } from '@/components/reward-badge';
 import { StatsCard } from '@/components/stats-card';

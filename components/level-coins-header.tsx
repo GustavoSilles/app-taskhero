@@ -39,7 +39,7 @@ export function LevelCoinsHeader({
       <View style={styles.levelContainer}>
         <View style={styles.levelInfo}>
           <View style={styles.levelBadge}>
-            <ThemedText style={styles.levelEmoji}>⭐</ThemedText>
+            <IconSymbol name="star.fill" size={12} color={colors.primary} />
             <ThemedText type="defaultSemiBold" style={styles.levelText}>
               Nv. {level}
             </ThemedText>
@@ -107,9 +107,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 3,
-  },
-  levelEmoji: {
-    fontSize: 12,
   },
   levelText: {
     fontSize: 12,
