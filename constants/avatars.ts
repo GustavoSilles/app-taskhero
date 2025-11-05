@@ -13,52 +13,73 @@ export interface Avatar {
 export const AVATARS: Avatar[] = [
   { 
     id: '1', 
-    image: require('@/assets/imagens-heroes/homem-aranha.jpg'), 
+    image: require('@/assets/imagens-heroes/homem-aranha.webp'), 
     name: 'Homem-Aranha', 
     unlocked: true, 
     cost: 0 
   },
   { 
     id: '2', 
-    image: require('@/assets/imagens-heroes/flash.jpg'), 
+    image: require('@/assets/imagens-heroes/flash.webp'), 
     name: 'Flash', 
     unlocked: true, 
     cost: 0 
   },
   { 
     id: '3', 
-    image: require('@/assets/imagens-heroes/arqueiro-verde.jpg'), 
+    image: require('@/assets/imagens-heroes/arqueiro-verde.webp'), 
     name: 'Arqueiro Verde', 
     unlocked: true, 
     cost: 0 
   },
   { 
     id: '4', 
-    image: require('@/assets/imagens-heroes/deadpool.jpg'), 
+    image: require('@/assets/imagens-heroes/deadpool.webp'), 
     name: 'Deadpool', 
     unlocked: false, 
     cost: 50 
   },
   { 
     id: '5', 
-    image: require('@/assets/imagens-heroes/demolidor.jpg'), 
+    image: require('@/assets/imagens-heroes/demolidor.webp'), 
     name: 'Demolidor', 
     unlocked: false, 
     cost: 100 
   },
   { 
     id: '6', 
-    image: require('@/assets/imagens-heroes/invencivel.jpg'), 
+    image: require('@/assets/imagens-heroes/invencivel.webp'), 
     name: 'Invencível', 
     unlocked: false, 
     cost: 150 
   },
   { 
     id: '7', 
-    image: require('@/assets/imagens-heroes/homem-aranho-preto.jpg'), 
+    image: require('@/assets/imagens-heroes/aranha-preto.webp'), 
     name: 'Aranha Preto', 
     unlocked: false, 
     cost: 200 
+  },
+  { 
+    id: '8', 
+    image: require('@/assets/imagens-heroes/batman.webp'), 
+    name: 'Batman', 
+    unlocked: false, 
+    cost: 250 
+  },
+  { 
+    id: '9', 
+    image: require('@/assets/imagens-heroes/homem-aranha-venon.webp'), 
+    name: 'Aranha Venom', 
+    unlocked: false, 
+    cost: 300 
+  },
+  { 
+    id: '10', 
+    image: require('@/assets/imagens-heroes/kratos.webp'), 
+    name: 'Kratos', 
+    unlocked: false, 
+    cost: 350 
   },
 ];
 
