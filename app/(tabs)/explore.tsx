@@ -1,11 +1,14 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity, Image } from 'react-native';
+import { useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { RewardBadge } from '@/components/reward-badge';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
-import { useState } from 'react';
+import { useAuth } from '@/contexts/auth-context';
+import { useState, useRef, useEffect } from 'react';
+import { AVATARS } from '@/constants/avatars';
 
 // Dados mockados - posteriormente serão substituídos por dados reais
 const mockBadges = [
@@ -56,73 +59,62 @@ const mockBadges = [
   },
 ];
 
-// Avatares disponíveis - Heróis
-const mockAvatars = [
-  { 
-    id: '1', 
-    image: require('@/assets/imagens-heroes/homem-aranha.jpg'), 
-    name: 'Homem-Aranha', 
-    unlocked: true, 
-    cost: 0 
-  },
-  { 
-    id: '2', 
-    image: require('@/assets/imagens-heroes/flash.jpg'), 
-    name: 'Flash', 
-    unlocked: true, 
-    cost: 0 
-  },
-  { 
-    id: '3', 
-    image: require('@/assets/imagens-heroes/arqueiro-verde.jpg'), 
-    name: 'Arqueiro Verde', 
-    unlocked: true, 
-    cost: 0 
-  },
-  { 
-    id: '4', 
-    image: require('@/assets/imagens-heroes/deadpool.jpg'), 
-    name: 'Deadpool', 
-    unlocked: false, 
-    cost: 50 
-  },
-  { 
-    id: '5', 
-    image: require('@/assets/imagens-heroes/demolidor.jpg'), 
-    name: 'Demolidor', 
-    unlocked: false, 
-    cost: 100 
-  },
-  { 
-    id: '6', 
-    image: require('@/assets/imagens-heroes/invencivel.jpg'), 
-    name: 'Invencível', 
-    unlocked: false, 
-    cost: 150 
-  },
-  { 
-    id: '7', 
-    image: require('@/assets/imagens-heroes/homem-aranho-preto.jpg'), 
-    name: 'Aranha Preto', 
-    unlocked: false, 
-    cost: 200 
-  },
-];
-
 export default function RewardsScreen() {
+  const params = useLocalSearchParams();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const avatarsSectionRef = useRef<View>(null);
+  
   const [badges] = useState(mockBadges);
-  const [avatars] = useState(mockAvatars);
-  const [selectedAvatar, setSelectedAvatar] = useState('1');
+  const [avatars] = useState(AVATARS);
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const { user, updateSelectedAvatar } = useAuth();
+  
+  // Usa o avatar do usuário ou o padrão
+  const [selectedAvatar, setSelectedAvatar] = useState(user?.selectedAvatarId || '1');
 
   const unlockedBadges = badges.filter((b) => b.unlocked).length;
   const totalBadges = badges.length;
   const unlockedAvatars = avatars.filter((a) => a.unlocked).length;
   const totalAvatars = avatars.length;
 
+  // Scroll para a seção de avatares quando o parâmetro scrollToAvatars é true
+  // O timestamp (params.t) força o efeito a rodar toda vez
+  useEffect(() => {
+    if (params.scrollToAvatars === 'true') {
+      setTimeout(() => {
+        avatarsSectionRef.current?.measureLayout(
+          scrollViewRef.current as any,
+          (x, y) => {
+            scrollViewRef.current?.scrollTo({ y: y - 20, animated: true });
+          },
+          () => {}
+        );
+      }, 100);
+    }
+  }, [params.scrollToAvatars, params.t]);
+
+  // Atualiza o avatar selecionado quando o usuário muda
+  useEffect(() => {
+    if (user?.selectedAvatarId) {
+      setSelectedAvatar(user.selectedAvatarId);
+    }
+  }, [user?.selectedAvatarId]);
+
+  // Função para selecionar avatar
+  const handleSelectAvatar = (avatarId: string) => {
+    const avatar = avatars.find(a => a.id === avatarId);
+    if (avatar && avatar.unlocked) {
+      setSelectedAvatar(avatarId);
+      updateSelectedAvatar(avatarId);
+    }
+  };
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView 
+      ref={scrollViewRef}
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {/* Seção de Emblemas */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
@@ -151,7 +143,7 @@ export default function RewardsScreen() {
       </View>
 
       {/* Seção de Avatares */}
-      <View style={styles.section}>
+      <View ref={avatarsSectionRef} style={styles.section}>
         <View style={styles.sectionHeader}>
           <View style={styles.sectionTitleContainer}>
             <IconSymbol name="person.circle.fill" size={20} color={colors.primary} />
@@ -177,7 +169,7 @@ export default function RewardsScreen() {
                   borderWidth: selectedAvatar === avatar.id ? 3 : 1,
                 },
               ]}
-              onPress={() => avatar.unlocked && setSelectedAvatar(avatar.id)}
+              onPress={() => handleSelectAvatar(avatar.id)}
               disabled={!avatar.unlocked}>
               <View style={styles.avatarImageContainer}>
                 <Image 

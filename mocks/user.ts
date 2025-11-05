@@ -7,6 +7,7 @@ export const mockUser: User = {
   name: 'Gustavo',
   email: 'gustavo@exemplo.com',
   avatarUrl: undefined,
+  selectedAvatarId: '1', // Avatar inicial: Homem-Aranha
   createdAt: new Date(2025, 0, 1), // 1 de janeiro de 2025
   level: 3,
   currentXP: 180,

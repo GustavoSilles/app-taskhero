@@ -14,6 +14,7 @@ import { mockGoals } from '@/mocks/goals';
 import { BADGE_REQUIREMENTS } from '@/constants/gamification';
 import { useAuth } from '@/contexts/auth-context';
 import { EditProfileBottomSheet } from '@/components/bottom-sheets/edit-profile-bottom-sheet';
+import { ThemeSelector } from '@/components/theme-selector';
 
 export default function ProfileScreen() {
   const { colorScheme } = useTheme();
@@ -42,6 +43,13 @@ export default function ProfileScreen() {
 
   const handleCloseEditProfile = () => {
     editProfileBottomSheetRef.current?.close();
+  };
+
+  const handleAvatarEdit = () => {
+    editProfileBottomSheetRef.current?.close();
+    // Navegar para a tela de recompensas (explore) com scroll para avatares
+    // Adiciona timestamp para garantir que o scroll funcione toda vez
+    router.push(`/(tabs)/explore?scrollToAvatars=true&t=${Date.now()}`);
   };
 
   const handleLogout = () => {
@@ -105,6 +113,7 @@ export default function ProfileScreen() {
             name={user?.name || mockUser.name}
             email={user?.email || mockUser.email}
             avatarUrl={user?.avatarUrl || mockUser.avatarUrl}
+            selectedAvatarId={user?.selectedAvatarId || mockUser.selectedAvatarId}
             level={user?.level || mockUser.level}
             totalPoints={user?.totalPoints || mockUser.totalPoints}
             taskCoins={mockUser.taskCoins}
@@ -171,6 +180,30 @@ export default function ProfileScreen() {
         </ScrollView>
       </View>
 
+      {/* Preferências */}
+      <View style={styles.section}>
+        <ThemedText type="subtitle" style={styles.sectionTitle}>
+          Preferências
+        </ThemedText>
+        
+        <View style={[styles.preferenceItem, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+          <View style={styles.preferenceInfo}>
+            <IconSymbol 
+              name={colorScheme === 'dark' ? 'moon.fill' : 'sun.max.fill'} 
+              size={20} 
+              color={colors.text} 
+            />
+            <View style={styles.preferenceText}>
+              <ThemedText type="defaultSemiBold">Tema</ThemedText>
+              <ThemedText style={styles.preferenceDescription}>
+                {colorScheme === 'dark' ? 'Modo Escuro' : 'Modo Claro'}
+              </ThemedText>
+            </View>
+          </View>
+          <ThemeSelector />
+        </View>
+      </View>
+
       {/* Botões de Ação */}
       <View style={[styles.section, { marginTop: 20 }]}>
         <TouchableOpacity
@@ -198,9 +231,11 @@ export default function ProfileScreen() {
           name: user?.name || mockUser.name,
           email: user?.email || mockUser.email,
           avatarUrl: user?.avatarUrl || mockUser.avatarUrl,
+          selectedAvatarId: user?.selectedAvatarId || mockUser.selectedAvatarId,
         }}
         onSubmit={handleSaveProfile}
         onClose={handleCloseEditProfile}
+        onAvatarEdit={handleAvatarEdit}
       />
     </>
   );
@@ -262,5 +297,27 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 12,
     opacity: 0.5,
+  },
+  preferenceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  preferenceInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  preferenceText: {
+    flex: 1,
+  },
+  preferenceDescription: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 2,
   },
 });

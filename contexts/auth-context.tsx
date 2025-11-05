@@ -8,6 +8,7 @@ interface AuthContextData {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => void;
+  updateSelectedAvatar: (avatarId: string) => void;
   isLoading: boolean;
 }
 
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           goalsCompletedOnTime: 0,
           goalsCompletedLate: 0,
           goalsExpired: 0,
+          selectedAvatarId: '1', // Avatar padrão
         };
         setUser(newUser);
       } else {
@@ -81,6 +83,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const updateSelectedAvatar = (avatarId: string) => {
+    if (user) {
+      // Atualiza localmente (apenas mock, sem backend)
+      const updatedUser = {
+        ...user,
+        selectedAvatarId: avatarId,
+      };
+      setUser(updatedUser);
+      console.log('AuthContext - Avatar atualizado (mock):', avatarId);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -89,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signIn,
         signUp,
         signOut,
+        updateSelectedAvatar,
         isLoading,
       }}>
       {children}

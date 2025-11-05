@@ -5,11 +5,13 @@ import { IconSymbol } from './ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { getLevelName } from '@/utils/level-calculation';
+import { getAvatarImage } from '@/constants/avatars';
 
 interface UserProfileHeaderProps {
   name: string;
   email: string;
   avatarUrl?: string;
+  selectedAvatarId?: string;
   level: number;
   totalPoints: number;
   taskCoins: number;
@@ -21,6 +23,7 @@ export function UserProfileHeader({
   name,
   email,
   avatarUrl,
+  selectedAvatarId,
   level,
   totalPoints,
   taskCoins,
@@ -30,11 +33,16 @@ export function UserProfileHeader({
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
 
+  // Prioriza avatar de herói selecionado sobre avatarUrl
+  const heroAvatarImage = selectedAvatarId ? getAvatarImage(selectedAvatarId) : null;
+
   return (
     <ThemedView style={styles.container}>
       <View style={styles.header}>
         <View style={styles.avatarContainer}>
-          {avatarUrl ? (
+          {heroAvatarImage ? (
+            <Image source={heroAvatarImage} style={styles.avatar} />
+          ) : avatarUrl ? (
             <Image source={{ uri: avatarUrl }} style={styles.avatar} />
           ) : (
             <View

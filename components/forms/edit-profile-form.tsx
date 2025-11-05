@@ -5,25 +5,32 @@ import { ThemedView } from '../themed-view';
 import { IconSymbol } from '../ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
+import { getAvatarImage, getAvatarById } from '@/constants/avatars';
 
 interface EditProfileFormData {
   name: string;
   email: string;
   avatarUrl?: string;
+  selectedAvatarId?: string;
 }
 
 interface EditProfileFormProps {
   initialData: EditProfileFormData;
   onSubmit: (data: EditProfileFormData) => void;
   onCancel: () => void;
+  onAvatarEdit?: () => void;
 }
 
-export function EditProfileForm({ initialData, onSubmit, onCancel }: EditProfileFormProps) {
+export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit }: EditProfileFormProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
 
   const [name, setName] = useState(initialData.name);
   const [email, setEmail] = useState(initialData.email);
+
+  // Obtém a imagem do avatar de herói selecionado
+  const heroAvatarImage = initialData.selectedAvatarId ? getAvatarImage(initialData.selectedAvatarId) : null;
+  const selectedAvatar = initialData.selectedAvatarId ? getAvatarById(initialData.selectedAvatarId) : null;
 
   const handleSubmit = () => {
     if (!name.trim()) {
@@ -50,11 +57,7 @@ export function EditProfileForm({ initialData, onSubmit, onCancel }: EditProfile
     });
   };
 
-  const handleChangePhoto = () => {
-    // TODO: Implementar seleção de foto da galeria ou câmera
-    console.log('Alterar foto de perfil');
-    alert('Funcionalidade de alteração de foto será implementada em breve!');
-  };
+
 
   return (
     <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
@@ -66,8 +69,10 @@ export function EditProfileForm({ initialData, onSubmit, onCancel }: EditProfile
 
           {/* Avatar */}
           <View style={styles.avatarSection}>
-            <View style={styles.avatarContainer}>
-              {initialData.avatarUrl ? (
+            <View style={[styles.avatarContainer, { position: 'relative' }]}>
+              {heroAvatarImage ? (
+                <Image source={heroAvatarImage} style={styles.avatar} />
+              ) : initialData.avatarUrl ? (
                 <Image source={{ uri: initialData.avatarUrl }} style={styles.avatar} />
               ) : (
                 <View
@@ -78,16 +83,18 @@ export function EditProfileForm({ initialData, onSubmit, onCancel }: EditProfile
                   <IconSymbol name="person.fill" size={50} color="#fff" />
                 </View>
               )}
+              <TouchableOpacity
+                style={[
+                  styles.editAvatarButton,
+                  { backgroundColor: colors.primary },
+                ]}
+                onPress={onAvatarEdit}>
+                <IconSymbol name="pencil" size={16} color="#fff" />
+              </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity
-              style={[styles.changePhotoButton, { backgroundColor: colors.primary }]}
-              onPress={handleChangePhoto}>
-              <IconSymbol name="pencil" size={18} color="#fff" />
-              <ThemedText style={styles.changePhotoText}>
-                Alterar Foto
-              </ThemedText>
-            </TouchableOpacity>
+            {selectedAvatar && (
+              <ThemedText style={styles.avatarName}>{selectedAvatar.name}</ThemedText>
+            )}
           </View>
 
           {/* Nome */}
@@ -174,15 +181,20 @@ const styles = StyleSheet.create({
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   avatarContainer: {
-    marginBottom: 16,
+    marginBottom: 8,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
+  },
+  avatarName: {
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   avatarPlaceholder: {
     width: 100,
@@ -191,18 +203,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  changePhotoButton: {
-    flexDirection: 'row',
+  editAvatarButton: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 20,
-  },
-  changePhotoText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
   },
   field: {
     marginBottom: 20,

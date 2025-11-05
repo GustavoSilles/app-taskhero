@@ -14,6 +14,7 @@ export interface User {
   name: string;
   email: string;
   avatarUrl?: string;
+  selectedAvatarId?: string; // ID do avatar de herói selecionado
   createdAt: Date;
   level: number;
   currentXP: number; // XP atual no nível

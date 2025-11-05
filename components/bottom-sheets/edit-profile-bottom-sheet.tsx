@@ -10,14 +10,16 @@ interface EditProfileBottomSheetProps {
     name: string;
     email: string;
     avatarUrl?: string;
+    selectedAvatarId?: string;
   };
   onSubmit: (data: any) => void;
   onClose: () => void;
+  onAvatarEdit?: () => void;
   onChange?: (index: number) => void;
 }
 
 export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomSheetProps>(
-  ({ initialData, onSubmit, onClose, onChange }, ref) => {
+  ({ initialData, onSubmit, onClose, onAvatarEdit, onChange }, ref) => {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
     
@@ -47,6 +49,7 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
             initialData={initialData}
             onSubmit={onSubmit}
             onCancel={onClose}
+            onAvatarEdit={onAvatarEdit}
           />
         </BottomSheetView>
       </BottomSheet>

@@ -1,20 +1,30 @@
-import { Tabs } from 'expo-router';
+import { Tabs, router } from 'expo-router';
 import React from 'react';
-import { View, Platform } from 'react-native';
+import { View, Platform, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { ThemeSelector } from '@/components/theme-selector';
 import { LevelCoinsHeader } from '@/components/level-coins-header';
 import { Logo } from '@/components/logo';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { mockUser } from '@/mocks/user';
+import { useAuth } from '@/contexts/auth-context';
+import { getAvatarImage } from '@/constants/avatars';
 
 export default function TabLayout() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+
+  const handleAvatarPress = () => {
+    router.push('/(tabs)/profile');
+  };
+
+  // Obtém a imagem do avatar de herói selecionado
+  const selectedAvatarId = user?.selectedAvatarId || mockUser.selectedAvatarId;
+  const heroAvatarImage = selectedAvatarId ? getAvatarImage(selectedAvatarId) : null;
 
   return (
     <Tabs
@@ -54,7 +64,29 @@ export default function TabLayout() {
             taskCoins={mockUser.taskCoins}
           />
         ),
-        headerRight: () => <ThemeSelector style={{ marginRight: 16 }} />,
+        headerRight: () => (
+          <TouchableOpacity 
+            onPress={handleAvatarPress} 
+            style={styles.avatarContainer}
+            activeOpacity={0.7}
+          >
+            {heroAvatarImage ? (
+              <Image
+                source={heroAvatarImage}
+                style={styles.avatar}
+              />
+            ) : (user?.avatarUrl || mockUser.avatarUrl) ? (
+              <Image
+                source={{ uri: user?.avatarUrl || mockUser.avatarUrl }}
+                style={styles.avatar}
+              />
+            ) : (
+              <View style={[styles.avatarPlaceholder, { backgroundColor: colors.secondary }]}>
+                <IconSymbol name="person.fill" size={20} color="#fff" />
+              </View>
+            )}
+          </TouchableOpacity>
+        ),
       }}>
       <Tabs.Screen
         name="index"
@@ -95,3 +127,21 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  avatarContainer: {
+    marginRight: 16,
+  },
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  avatarPlaceholder: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+});
