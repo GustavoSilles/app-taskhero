@@ -26,6 +26,8 @@ export default function HomeScreen() {
   const [currentSort, setCurrentSort] = useState<'deadline' | 'created' | 'progress' | 'status'>('deadline');
   const [showFilters, setShowFilters] = useState(false);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
   
   // Ref para o Bottom Sheet
   const goalBottomSheetRef = useRef<BottomSheet>(null);
@@ -35,6 +37,30 @@ export default function HomeScreen() {
     const filtered = filterGoalsByStatus(mockGoals, currentFilter);
     return sortGoals(filtered, currentSort);
   }, [currentFilter, currentSort]);
+
+  // Paginação de metas
+  const paginatedGoals = useMemo(() => {
+    const endIndex = currentPage * ITEMS_PER_PAGE;
+    return filteredAndSortedGoals.slice(0, endIndex);
+  }, [filteredAndSortedGoals, currentPage]);
+
+  const hasMoreGoals = filteredAndSortedGoals.length > paginatedGoals.length;
+  const totalGoals = filteredAndSortedGoals.length;
+
+  // Resetar página quando mudar filtro ou ordenação
+  const handleFilterChange = useCallback((filter: GoalStatus | 'all') => {
+    setCurrentFilter(filter);
+    setCurrentPage(1);
+  }, []);
+
+  const handleSortChange = useCallback((sort: 'deadline' | 'created' | 'progress' | 'status') => {
+    setCurrentSort(sort);
+    setCurrentPage(1);
+  }, []);
+
+  const handleLoadMore = useCallback(() => {
+    setCurrentPage(prev => prev + 1);
+  }, []);
 
   // Funções para abrir/fechar Bottom Sheet
   const handleOpenGoalBottomSheet = useCallback(() => {
@@ -116,8 +142,8 @@ export default function HomeScreen() {
           <FilterBar
             currentFilter={currentFilter}
             currentSort={currentSort}
-            onFilterChange={setCurrentFilter}
-            onSortChange={setCurrentSort}
+            onFilterChange={handleFilterChange}
+            onSortChange={handleSortChange}
           />
         )}
 
@@ -130,15 +156,35 @@ export default function HomeScreen() {
             onActionPress={handleOpenGoalBottomSheet}
           />
         ) : (
-          filteredAndSortedGoals.map((goal) => (
-            <GoalCard
-              key={goal.id}
-              {...goal}
-              onPress={() => {
-                router.push(`/goal/${goal.id}` as any);
-              }}
-            />
-          ))
+          <>
+            {paginatedGoals.map((goal) => (
+              <GoalCard
+                key={goal.id}
+                {...goal}
+                onPress={() => {
+                  router.push(`/goal/${goal.id}` as any);
+                }}
+              />
+            ))}
+            
+            {hasMoreGoals && (
+              <View style={styles.paginationContainer}>
+                <ThemedText style={styles.paginationInfo}>
+                  Mostrando {paginatedGoals.length} de {totalGoals} metas
+                </ThemedText>
+                <TouchableOpacity
+                  onPress={handleLoadMore}
+                  style={[styles.loadMoreButton, { backgroundColor: colors.primary }]}
+                  activeOpacity={0.8}
+                >
+                  <ThemedText style={styles.loadMoreButtonText}>
+                    Carregar mais
+                  </ThemedText>
+                  <Ionicons name="chevron-down" size={18} color="#fff" />
+                </TouchableOpacity>
+              </View>
+            )}
+          </>
         )}
         </View>
       </ScrollView>
@@ -221,6 +267,29 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
+  },
+  paginationContainer: {
+    marginTop: 24,
+    alignItems: 'center',
+    gap: 12,
+  },
+  paginationInfo: {
+    fontSize: 14,
+    opacity: 0.7,
+  },
+  loadMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 12,
+    gap: 8,
+  },
+  loadMoreButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });
 
