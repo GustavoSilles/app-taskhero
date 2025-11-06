@@ -63,6 +63,10 @@ const MAPPING: IconMapping = {
   'eye.slash': { library: 'material', name: 'visibility-off' },
   'exclamationmark.circle': { library: 'material', name: 'error' },
   'exclamationmark.circle.fill': { library: 'material', name: 'error' },
+  'exclamationmark.triangle': { library: 'material', name: 'warning' },
+  'exclamationmark.triangle.fill': { library: 'material', name: 'warning' },
+  'info.circle.fill': { library: 'material', name: 'info' },
+  xmark: { library: 'material', name: 'close' },
 } as const;
 
 /**

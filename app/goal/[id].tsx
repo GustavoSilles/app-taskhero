@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useRef, useCallback } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -18,11 +18,13 @@ import { canDeleteGoal, formatDeadlineMessage, calculateGoalPoints } from '@/uti
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { useToast } from '@/contexts/toast-context';
 
 export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const toast = useToast();
 
   const [tasks, setTasks] = useState(getTasksByGoalId(id || ''));
   const [showDeleteGoalModal, setShowDeleteGoalModal] = useState(false);
@@ -56,15 +58,19 @@ export default function GoalDetailScreen() {
   const handleAddTask = useCallback((taskData: any) => {
     console.log('Nova tarefa:', taskData);
     handleCloseTaskBottomSheet();
-    Alert.alert('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
-  }, [handleCloseTaskBottomSheet]);
+    setTimeout(() => {
+      toast.success('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
+    }, 300);
+  }, [handleCloseTaskBottomSheet, toast]);
 
   const handleEditGoal = useCallback((goalData: any) => {
     console.log('Meta editada:', goalData);
     handleCloseEditGoalBottomSheet();
-    Alert.alert('Sucesso', 'Meta atualizada com sucesso!');
+    setTimeout(() => {
+      toast.success('Sucesso', 'Meta atualizada com sucesso!');
+    }, 300);
     // Aqui você faria a chamada para a API para atualizar a meta
-  }, [handleCloseEditGoalBottomSheet]);
+  }, [handleCloseEditGoalBottomSheet, toast]);
 
   if (!goal) {
     return (
@@ -84,10 +90,7 @@ export default function GoalDetailScreen() {
     if (canDeleteGoal(goal.status)) {
       setShowDeleteGoalModal(true);
     } else {
-      Alert.alert(
-        'Não é possível excluir',
-        'Metas concluídas não podem ser excluídas.'
-      );
+      toast.warning('Não é possível excluir', 'Metas concluídas não podem ser excluídas.');
     }
   };
 
@@ -105,7 +108,7 @@ export default function GoalDetailScreen() {
     setShowCompleteGoalModal(false);
     console.log('Concluir meta:', goal.id);
     const points = calculateGoalPoints('completed');
-    Alert.alert('Parabéns!', `Meta concluída! Você ganhou ${points} pontos! 🎉`);
+    toast.success('Parabéns!', `Meta concluída! Você ganhou ${points} pontos! 🎉`);
   };
 
   const handleToggleTask = (taskId: string) => {
@@ -120,7 +123,7 @@ export default function GoalDetailScreen() {
 
   const handleDeleteTask = (taskId: string) => {
     setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-    Alert.alert('Sucesso', 'Tarefa excluída com sucesso!');
+    toast.success('Sucesso', 'Tarefa excluída com sucesso!');
   };
 
   return (

@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { useRef, useState } from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -16,11 +16,13 @@ import { useAuth } from '@/contexts/auth-context';
 import { EditProfileBottomSheet } from '@/components/bottom-sheets/edit-profile-bottom-sheet';
 import { ThemeSelector } from '@/components/theme-selector';
 import { ConfirmationModal } from '@/components/confirmation-modal';
+import { useToast } from '@/contexts/toast-context';
 
 export default function ProfileScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { signOut, user } = useAuth();
+  const toast = useToast();
   const editProfileBottomSheetRef = useRef<BottomSheet>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -43,12 +45,12 @@ export default function ProfileScreen() {
       ? 'Suas informações e senha foram atualizadas com sucesso!'
       : 'Suas informações foram atualizadas com sucesso!';
     
-    Alert.alert(
-      'Perfil Atualizado',
-      successMessage,
-      [{ text: 'OK' }]
-    );
     editProfileBottomSheetRef.current?.close();
+    
+    // Pequeno delay para fechar o bottom sheet antes de mostrar o toast
+    setTimeout(() => {
+      toast.success('Perfil Atualizado', successMessage);
+    }, 300);
   };
 
   const handleCloseEditProfile = () => {

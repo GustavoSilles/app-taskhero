@@ -7,6 +7,7 @@ import 'react-native-reanimated';
 
 import { AuthProvider } from '@/contexts/auth-context';
 import { ThemeProvider, useTheme } from '@/contexts/theme-context';
+import { ToastProvider } from '@/contexts/toast-context';
 
 function RootLayoutContent() {
   const { colorScheme } = useTheme();
@@ -30,9 +31,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <ThemeProvider>
-          <AuthProvider>
-            <RootLayoutContent />
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <RootLayoutContent />
+            </AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

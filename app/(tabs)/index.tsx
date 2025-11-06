@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { GoalCard } from '@/components/goal-card';
@@ -15,10 +15,12 @@ import { calculateGoalStatus } from '@/utils/goal-status';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
+import { useToast } from '@/contexts/toast-context';
 
 export default function HomeScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
+  const toast = useToast();
 
   const [currentFilter, setCurrentFilter] = useState<GoalStatus | 'all'>('all');
   const [currentSort, setCurrentSort] = useState<'deadline' | 'created' | 'progress' | 'status'>('deadline');
@@ -71,18 +73,12 @@ export default function HomeScreen() {
     };
 
     console.log('Meta criada:', newGoal);
+    handleCloseGoalBottomSheet();
     
-    Alert.alert(
-      'Sucesso!',
-      'Meta criada com sucesso! Agora adicione tarefas para começar.',
-      [
-        {
-          text: 'OK',
-          onPress: () => handleCloseGoalBottomSheet(),
-        },
-      ]
-    );
-  }, [handleCloseGoalBottomSheet]);
+    setTimeout(() => {
+      toast.success('Sucesso!', 'Meta criada com sucesso! Agora adicione tarefas para começar.');
+    }, 300);
+  }, [handleCloseGoalBottomSheet, toast]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
