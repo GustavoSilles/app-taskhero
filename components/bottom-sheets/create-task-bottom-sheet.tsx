@@ -1,5 +1,5 @@
-import React, { useMemo, forwardRef } from 'react';
-import { StyleSheet } from 'react-native';
+import React, { useMemo, forwardRef, useState, useEffect } from 'react';
+import { StyleSheet, Keyboard } from 'react-native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { TaskForm } from '../forms/task-form';
 import { Colors } from '@/constants/theme';
@@ -14,8 +14,25 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
   ({ onSubmit, onClose }, ref) => {
     const { colorScheme } = useTheme();
     const colors = Colors[colorScheme ?? 'light'];
+    const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
     
-    const snapPoints = useMemo(() => ['50%', '65%'], []);
+    const snapPoints = useMemo(() => {
+      return isKeyboardVisible ? ['90%'] : ['50%', '65%'];
+    }, [isKeyboardVisible]);
+
+    useEffect(() => {
+      const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+        setIsKeyboardVisible(true);
+      });
+      const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+        setIsKeyboardVisible(false);
+      });
+
+      return () => {
+        keyboardDidShowListener.remove();
+        keyboardDidHideListener.remove();
+      };
+    }, []);
 
     const renderBackdrop = (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -34,6 +51,9 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         onClose={onClose}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
         handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.primary }]}
         backgroundStyle={[styles.background, { backgroundColor: colors.surface }]}
       >
