@@ -22,8 +22,9 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
   ({ initialData, onSubmit, onClose, onAvatarEdit, onChange }, ref) => {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
-    
-    const snapPoints = useMemo(() => ['85%', '100%'], []);    const renderBackdrop = (props: BottomSheetBackdropProps) => (
+
+    const snapPoints = useMemo(() => ['100%'], []);
+    const renderBackdrop = (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}
@@ -71,7 +72,7 @@ const styles = StyleSheet.create({
     height: 4,
   },
   background: {
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
   },
 });
