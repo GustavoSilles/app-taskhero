@@ -11,7 +11,7 @@ import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { mockUser } from '@/mocks/user';
 import { mockGoals } from '@/mocks/goals';
-import { BADGE_REQUIREMENTS } from '@/constants/gamification';
+import { getUnlockedBadges } from '@/mocks/badges';
 import { useAuth } from '@/contexts/auth-context';
 import { EditProfileBottomSheet } from '@/components/bottom-sheets/edit-profile-bottom-sheet';
 import { ThemeSelector } from '@/components/theme-selector';
@@ -74,39 +74,8 @@ export default function ProfileScreen() {
     router.replace('/(auth)/login');
   };
 
-  // Mock de emblemas (depois vem do backend)
-  const badges = [
-    {
-      id: 'first_goal',
-      title: BADGE_REQUIREMENTS.FIRST_GOAL.title,
-      description: BADGE_REQUIREMENTS.FIRST_GOAL.description,
-      icon: BADGE_REQUIREMENTS.FIRST_GOAL.icon,
-      unlocked: true,
-      unlockedAt: new Date(2025, 0, 5),
-    },
-    {
-      id: 'task_warrior',
-      title: BADGE_REQUIREMENTS.TASK_WARRIOR.title,
-      description: BADGE_REQUIREMENTS.TASK_WARRIOR.description,
-      icon: BADGE_REQUIREMENTS.TASK_WARRIOR.icon,
-      unlocked: true,
-      unlockedAt: new Date(2025, 1, 10),
-    },
-    {
-      id: 'goal_master',
-      title: BADGE_REQUIREMENTS.GOAL_MASTER.title,
-      description: BADGE_REQUIREMENTS.GOAL_MASTER.description,
-      icon: BADGE_REQUIREMENTS.GOAL_MASTER.icon,
-      unlocked: false,
-    },
-    {
-      id: 'week_streak',
-      title: BADGE_REQUIREMENTS.WEEK_STREAK.title,
-      description: BADGE_REQUIREMENTS.WEEK_STREAK.description,
-      icon: BADGE_REQUIREMENTS.WEEK_STREAK.icon,
-      unlocked: false,
-    },
-  ];
+  // No perfil, mostramos APENAS os emblemas que o usuário desbloqueou
+  const badges = getUnlockedBadges();
 
   return (
     <>
@@ -166,22 +135,34 @@ export default function ProfileScreen() {
       {/* Emblemas */}
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <ThemedText type="subtitle">Emblemas</ThemedText>
+          <ThemedText type="subtitle">Meus Emblemas</ThemedText>
           <ThemedText style={styles.badgeCount}>
-            {badges.filter((b) => b.unlocked).length}/{badges.length}
+            {badges.length}
           </ThemedText>
         </View>
 
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.badgesScrollContent}
-          style={styles.badgesScroll}
-        >
-          {badges.map((badge) => (
-            <RewardBadge key={badge.id} {...badge} />
-          ))}
-        </ScrollView>
+        {badges.length > 0 ? (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.badgesScrollContent}
+            style={styles.badgesScroll}
+          >
+            {badges.map((badge) => (
+              <RewardBadge key={badge.id} {...badge} />
+            ))}
+          </ScrollView>
+        ) : (
+          <View style={[styles.emptyBadges, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+            <IconSymbol name="trophy" size={32} color={colors.icon} style={{ opacity: 0.3 }} />
+            <ThemedText style={styles.emptyBadgesText}>
+              Você ainda não possui emblemas
+            </ThemedText>
+            <ThemedText style={styles.emptyBadgesSubtext}>
+              Complete desafios para desbloquear!
+            </ThemedText>
+          </View>
+        )}
       </View>
 
       {/* Preferências */}
@@ -337,5 +318,24 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.6,
     marginTop: 2,
+  },
+  emptyBadges: {
+    padding: 32,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  emptyBadgesText: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 12,
+    textAlign: 'center',
+  },
+  emptyBadgesSubtext: {
+    fontSize: 12,
+    opacity: 0.6,
+    marginTop: 4,
+    textAlign: 'center',
   },
 });

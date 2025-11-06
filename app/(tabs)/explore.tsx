@@ -12,62 +12,15 @@ import { useState, useRef, useEffect } from 'react';
 import { AVATARS } from '@/constants/avatars';
 import { BuyAvatarModal } from '@/components/buy-avatar-modal';
 import { mockUser } from '@/mocks/user';
-
-// Dados mockados - posteriormente serão substituídos por dados reais
-const mockBadges = [
-  {
-    id: '1',
-    title: 'Primeira Meta',
-    description: 'Crie sua primeira meta',
-    icon: 'flag.fill',
-    unlocked: true,
-    unlockedAt: new Date(2025, 9, 1),
-  },
-  {
-    id: '2',
-    title: 'Dedicado',
-    description: 'Complete 10 tarefas',
-    icon: 'checkmark.seal.fill',
-    unlocked: true,
-    unlockedAt: new Date(2025, 9, 5),
-  },
-  {
-    id: '3',
-    title: 'Persistente',
-    description: 'Use o app por 7 dias seguidos',
-    icon: 'flame.fill',
-    unlocked: true,
-    unlockedAt: new Date(2025, 9, 8),
-  },
-  {
-    id: '4',
-    title: 'Mestre',
-    description: 'Complete uma meta inteira',
-    icon: 'star.fill',
-    unlocked: false,
-  },
-  {
-    id: '5',
-    title: 'Produtivo',
-    description: 'Complete 50 tarefas',
-    icon: 'bolt.fill',
-    unlocked: false,
-  },
-  {
-    id: '6',
-    title: 'Lendário',
-    description: 'Alcance o nível 10',
-    icon: 'crown.fill',
-    unlocked: false,
-  },
-];
+import { getAllBadges } from '@/mocks/badges';
 
 export default function RewardsScreen() {
   const params = useLocalSearchParams();
   const scrollViewRef = useRef<ScrollView>(null);
   const avatarsSectionRef = useRef<View>(null);
   
-  const [badges] = useState(mockBadges);
+  // Na tela de recompensas, mostramos TODOS os emblemas disponíveis
+  const [badges] = useState(getAllBadges());
   const [avatars, setAvatars] = useState(AVATARS);
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -192,7 +145,7 @@ export default function RewardsScreen() {
           </ThemedText>
         </View>
         <ThemedText style={styles.sectionDescription}>
-          Conquiste emblemas completando desafios especiais
+          Todos os emblemas disponíveis no TaskHero. Conquiste-os completando desafios especiais!
         </ThemedText>
 
         <ScrollView 

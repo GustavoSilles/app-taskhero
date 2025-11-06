@@ -9,7 +9,7 @@ export const mockUser: User = {
   avatarUrl: undefined,
   selectedAvatarId: '1', // Avatar inicial: Homem-Aranha
   createdAt: new Date(2025, 0, 1), // 1 de janeiro de 2025
-  level: 3,
+  level: 10,
   currentXP: 180,
   xpToNextLevel: 450,
   totalPoints: 450,
