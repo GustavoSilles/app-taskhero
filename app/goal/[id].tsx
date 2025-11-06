@@ -130,6 +130,11 @@ export default function GoalDetailScreen() {
     );
   };
 
+  const handleDeleteTask = (taskId: string) => {
+    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
+    Alert.alert('Sucesso', 'Tarefa excluída com sucesso!');
+  };
+
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -225,7 +230,7 @@ export default function GoalDetailScreen() {
               {...task}
               title={task.title}
               onToggle={() => handleToggleTask(task.id)}
-              onPress={() => console.log('Ver tarefa:', task.id)}
+              onDelete={() => handleDeleteTask(task.id)}
             />
           ))
         )}

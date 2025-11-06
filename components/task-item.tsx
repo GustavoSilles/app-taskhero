@@ -1,4 +1,4 @@
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { IconSymbol } from './ui/icon-symbol';
@@ -11,7 +11,7 @@ interface TaskItemProps {
   completed: boolean;
   priority?: 'low' | 'medium' | 'high';
   onToggle?: () => void;
-  onPress?: () => void;
+  onDelete?: () => void;
 }
 
 export function TaskItem({
@@ -19,7 +19,7 @@ export function TaskItem({
   completed,
   priority = 'medium',
   onToggle,
-  onPress,
+  onDelete,
 }: TaskItemProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -37,11 +37,37 @@ export function TaskItem({
     }
   };
 
+  const handleLongPress = () => {
+    Alert.alert(
+      'Excluir Tarefa',
+      `Deseja realmente excluir a tarefa "${title}"?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: () => {
+            if (onDelete) {
+              onDelete();
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity 
+      onPress={onToggle}
+      onLongPress={handleLongPress}
+      activeOpacity={0.7}
+      delayLongPress={500}
+    >
       <ThemedView style={styles.container}>
-        <TouchableOpacity
-          onPress={onToggle}
+        <View
           style={[
             styles.checkbox,
             completed && { backgroundColor: colors.success },
@@ -50,7 +76,7 @@ export function TaskItem({
           {completed && (
             <IconSymbol name="checkmark" size={16} color="#fff" />
           )}
-        </TouchableOpacity>
+        </View>
 
         <View style={styles.content}>
           <ThemedText
