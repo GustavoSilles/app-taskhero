@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity, Alert } from 'react-native';
 import { router } from 'expo-router';
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { UserProfileHeader } from '@/components/user-profile-header';
@@ -15,12 +15,14 @@ import { BADGE_REQUIREMENTS } from '@/constants/gamification';
 import { useAuth } from '@/contexts/auth-context';
 import { EditProfileBottomSheet } from '@/components/bottom-sheets/edit-profile-bottom-sheet';
 import { ThemeSelector } from '@/components/theme-selector';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 
 export default function ProfileScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { signOut, user } = useAuth();
   const editProfileBottomSheetRef = useRef<BottomSheet>(null);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   // Calcular estatísticas
   const totalGoals = mockGoals.length;
@@ -61,21 +63,13 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Sair da Conta',
-      'Você tem certeza que deseja sair?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { 
-          text: 'Sair', 
-          style: 'destructive',
-          onPress: () => {
-            signOut();
-            router.replace('/(auth)/login');
-          }
-        },
-      ]
-    );
+    setShowLogoutModal(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutModal(false);
+    signOut();
+    router.replace('/(auth)/login');
   };
 
   // Mock de emblemas (depois vem do backend)
@@ -244,6 +238,20 @@ export default function ProfileScreen() {
         onSubmit={handleSaveProfile}
         onClose={handleCloseEditProfile}
         onAvatarEdit={handleAvatarEdit}
+      />
+
+      {/* Modal de Confirmação de Logout */}
+      <ConfirmationModal
+        visible={showLogoutModal}
+        title="Sair da Conta"
+        message="Você tem certeza que deseja sair?"
+        confirmText="Sair"
+        cancelText="Cancelar"
+        confirmColor={colors.error}
+        icon="arrow.right.circle.fill"
+        iconColor={colors.error}
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutModal(false)}
       />
     </>
   );

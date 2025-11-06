@@ -17,6 +17,7 @@ import { getTasksByGoalId } from '@/mocks/tasks';
 import { canDeleteGoal, formatDeadlineMessage, calculateGoalPoints } from '@/utils/goal-status';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
+import { ConfirmationModal } from '@/components/confirmation-modal';
 
 export default function GoalDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -24,6 +25,8 @@ export default function GoalDetailScreen() {
   const colors = Colors[colorScheme ?? 'light'];
 
   const [tasks, setTasks] = useState(getTasksByGoalId(id || ''));
+  const [showDeleteGoalModal, setShowDeleteGoalModal] = useState(false);
+  const [showCompleteGoalModal, setShowCompleteGoalModal] = useState(false);
   
   // Refs para os Bottom Sheets
   const taskBottomSheetRef = useRef<BottomSheet>(null);
@@ -79,21 +82,7 @@ export default function GoalDetailScreen() {
 
   const handleDeleteGoal = () => {
     if (canDeleteGoal(goal.status)) {
-      Alert.alert(
-        'Excluir Meta',
-        'Tem certeza que deseja excluir esta meta? Esta ação não pode ser desfeita.',
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          {
-            text: 'Excluir',
-            style: 'destructive',
-            onPress: () => {
-              console.log('Excluir meta:', goal.id);
-              router.back();
-            },
-          },
-        ]
-      );
+      setShowDeleteGoalModal(true);
     } else {
       Alert.alert(
         'Não é possível excluir',
@@ -102,22 +91,21 @@ export default function GoalDetailScreen() {
     }
   };
 
+  const confirmDeleteGoal = () => {
+    setShowDeleteGoalModal(false);
+    console.log('Excluir meta:', goal.id);
+    router.back();
+  };
+
   const handleCompleteGoal = () => {
-    Alert.alert(
-      'Concluir Meta',
-      'Deseja marcar esta meta como concluída?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Concluir',
-          onPress: () => {
-            console.log('Concluir meta:', goal.id);
-            const points = calculateGoalPoints('completed');
-            Alert.alert('Parabéns!', `Meta concluída! Você ganhou ${points} pontos! 🎉`);
-          },
-        },
-      ]
-    );
+    setShowCompleteGoalModal(true);
+  };
+
+  const confirmCompleteGoal = () => {
+    setShowCompleteGoalModal(false);
+    console.log('Concluir meta:', goal.id);
+    const points = calculateGoalPoints('completed');
+    Alert.alert('Parabéns!', `Meta concluída! Você ganhou ${points} pontos! 🎉`);
   };
 
   const handleToggleTask = (taskId: string) => {
@@ -303,6 +291,34 @@ export default function GoalDetailScreen() {
           }}
           onSubmit={handleEditGoal}
           onClose={handleCloseEditGoalBottomSheet}
+        />
+
+        {/* Modal de Confirmação para Excluir Meta */}
+        <ConfirmationModal
+          visible={showDeleteGoalModal}
+          title="Excluir Meta"
+          message="Tem certeza que deseja excluir esta meta? Esta ação não pode ser desfeita."
+          confirmText="Excluir"
+          cancelText="Cancelar"
+          confirmColor={colors.error}
+          icon="trash"
+          iconColor={colors.error}
+          onConfirm={confirmDeleteGoal}
+          onCancel={() => setShowDeleteGoalModal(false)}
+        />
+
+        {/* Modal de Confirmação para Concluir Meta */}
+        <ConfirmationModal
+          visible={showCompleteGoalModal}
+          title="Concluir Meta"
+          message="Deseja marcar esta meta como concluída?"
+          confirmText="Concluir"
+          cancelText="Cancelar"
+          confirmColor={colors.success}
+          icon="checkmark.circle.fill"
+          iconColor={colors.success}
+          onConfirm={confirmCompleteGoal}
+          onCancel={() => setShowCompleteGoalModal(false)}
         />
       </GestureHandlerRootView>
     </SafeAreaView>
