@@ -32,6 +32,12 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
   );
   const [showStartDatePicker, setShowStartDatePicker] = useState(false);
   const [showEndDatePicker, setShowEndDatePicker] = useState(false);
+  const [errors, setErrors] = useState<{
+    title?: string;
+    description?: string;
+    endDate?: string;
+    general?: string;
+  }>({});
 
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
     setShowStartDatePicker(Platform.OS === 'ios');
@@ -47,19 +53,39 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
     }
   };
 
-  const handleSubmit = () => {
+  const validateForm = () => {
+    const newErrors: {
+      title?: string;
+      description?: string;
+      endDate?: string;
+    } = {};
+
     if (!title.trim()) {
-      alert('Título é obrigatório');
-      return;
+      newErrors.title = 'O título é obrigatório';
+    } else if (title.trim().length < 3) {
+      newErrors.title = 'O título deve ter pelo menos 3 caracteres';
     }
 
     if (!description.trim()) {
-      alert('Descrição é obrigatória');
-      return;
+      newErrors.description = 'A descrição é obrigatória';
+    } else if (description.trim().length < 10) {
+      newErrors.description = 'A descrição deve ter pelo menos 10 caracteres';
     }
 
     if (endDate <= startDate) {
-      alert('Data final deve ser maior que data inicial');
+      newErrors.endDate = 'A data final deve ser maior que a data inicial';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    // Limpa erros anteriores
+    setErrors({});
+
+    // Valida o formulário
+    if (!validateForm()) {
       return;
     }
 
@@ -79,6 +105,16 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
             {initialData ? 'Editar Meta' : 'Nova Meta'}
           </ThemedText>
 
+        {/* Mensagem de erro geral */}
+        {errors.general && (
+          <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+            <IconSymbol name="exclamationmark.circle.fill" size={20} color={colors.error} />
+            <ThemedText style={[styles.errorText, { color: colors.error }]}>
+              {errors.general}
+            </ThemedText>
+          </View>
+        )}
+
         {/* Título */}
         <View style={styles.field}>
           <ThemedText style={styles.label}>Título *</ThemedText>
@@ -87,15 +123,28 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
               styles.input,
               {
                 backgroundColor: colors.background,
-                borderColor: colors.border,
+                borderColor: errors.title ? colors.error : colors.border,
                 color: colors.text,
               },
             ]}
             value={title}
-            onChangeText={setTitle}
+            onChangeText={(text) => {
+              setTitle(text);
+              if (errors.title) {
+                setErrors({ ...errors, title: undefined });
+              }
+            }}
             placeholder="Ex: Aprender React Native"
             placeholderTextColor={colors.icon}
           />
+          {errors.title && (
+            <View style={styles.fieldErrorContainer}>
+              <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+              <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                {errors.title}
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         {/* Descrição */}
@@ -107,17 +156,30 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
               styles.textArea,
               {
                 backgroundColor: colors.background,
-                borderColor: colors.border,
+                borderColor: errors.description ? colors.error : colors.border,
                 color: colors.text,
               },
             ]}
             value={description}
-            onChangeText={setDescription}
+            onChangeText={(text) => {
+              setDescription(text);
+              if (errors.description) {
+                setErrors({ ...errors, description: undefined });
+              }
+            }}
             placeholder="Descreva sua meta em detalhes..."
             placeholderTextColor={colors.icon}
             multiline
             numberOfLines={4}
           />
+          {errors.description && (
+            <View style={styles.fieldErrorContainer}>
+              <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+              <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                {errors.description}
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         {/* Datas */}
@@ -149,7 +211,7 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
         <View style={styles.field}>
           <ThemedText style={styles.label}>Data Final *</ThemedText>
           <TouchableOpacity
-            style={[styles.dateButton, { borderColor: colors.border }]}
+            style={[styles.dateButton, { borderColor: errors.endDate ? colors.error : colors.border }]}
             onPress={() => setShowEndDatePicker(true)}>
             <IconSymbol name="flag" size={20} color={colors.icon} />
             <ThemedText style={styles.dateText}>
@@ -169,6 +231,14 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
               locale="pt-BR"
               minimumDate={startDate}
             />
+          )}
+          {errors.endDate && (
+            <View style={styles.fieldErrorContainer}>
+              <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+              <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                {errors.endDate}
+              </ThemedText>
+            </View>
           )}
           <ThemedText style={styles.hint}>
             Prazo: {Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))}{' '}
@@ -215,6 +285,19 @@ const styles = StyleSheet.create({
   formTitle: {
     marginBottom: 24,
   },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    flex: 1,
+  },
   field: {
     marginBottom: 20,
   },
@@ -228,6 +311,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     fontSize: 16,
+  },
+  fieldErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 4,
+  },
+  fieldErrorText: {
+    fontSize: 13,
   },
   textArea: {
     height: 100,

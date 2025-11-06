@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Image, Alert } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, Image } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
 import { IconSymbol } from '../ui/icon-symbol';
@@ -36,27 +36,38 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [errors, setErrors] = useState<{
+    name?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
+    confirmPassword?: string;
+    general?: string;
+  }>({});
 
   // Obtém a imagem do avatar de herói selecionado
   const heroAvatarImage = initialData.selectedAvatarId ? getAvatarImage(initialData.selectedAvatarId) : null;
   const selectedAvatar = initialData.selectedAvatarId ? getAvatarById(initialData.selectedAvatarId) : null;
 
-  const handleSubmit = () => {
+  const validateForm = () => {
+    const newErrors: {
+      name?: string;
+      email?: string;
+      currentPassword?: string;
+      newPassword?: string;
+      confirmPassword?: string;
+    } = {};
+
     if (!name.trim()) {
-      Alert.alert('Erro', 'Nome é obrigatório');
-      return;
+      newErrors.name = 'O nome é obrigatório';
+    } else if (name.trim().length < 3) {
+      newErrors.name = 'O nome deve ter pelo menos 3 caracteres';
     }
 
     if (!email.trim()) {
-      Alert.alert('Erro', 'E-mail é obrigatório');
-      return;
-    }
-
-    // Validação básica de email
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Erro', 'E-mail inválido');
-      return;
+      newErrors.email = 'O e-mail é obrigatório';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      newErrors.email = 'Digite um e-mail válido';
     }
 
     // Validação de senha (se estiver alterando)
@@ -64,30 +75,40 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
     
     if (isChangingPassword) {
       if (!currentPassword) {
-        Alert.alert('Erro', 'Digite sua senha atual para alterá-la');
-        return;
+        newErrors.currentPassword = 'Digite sua senha atual';
       }
 
       if (!newPassword) {
-        Alert.alert('Erro', 'Digite a nova senha');
-        return;
+        newErrors.newPassword = 'Digite a nova senha';
+      } else if (newPassword.length < 6) {
+        newErrors.newPassword = 'A senha deve ter no mínimo 6 caracteres';
       }
 
-      if (newPassword.length < 6) {
-        Alert.alert('Erro', 'A nova senha deve ter no mínimo 6 caracteres');
-        return;
+      if (!confirmPassword) {
+        newErrors.confirmPassword = 'Confirme a nova senha';
+      } else if (newPassword !== confirmPassword) {
+        newErrors.confirmPassword = 'As senhas não coincidem';
       }
 
-      if (newPassword !== confirmPassword) {
-        Alert.alert('Erro', 'A confirmação da senha não confere');
-        return;
-      }
-
-      if (currentPassword === newPassword) {
-        Alert.alert('Erro', 'A nova senha deve ser diferente da senha atual');
-        return;
+      if (currentPassword && newPassword && currentPassword === newPassword) {
+        newErrors.newPassword = 'A nova senha deve ser diferente da atual';
       }
     }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = () => {
+    // Limpa erros anteriores
+    setErrors({});
+
+    // Valida o formulário
+    if (!validateForm()) {
+      return;
+    }
+
+    const isChangingPassword = currentPassword || newPassword || confirmPassword;
 
     onSubmit({
       name: name.trim(),
@@ -108,6 +129,16 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
           <ThemedText type="subtitle" style={styles.formTitle}>
             Editar Perfil
           </ThemedText>
+
+          {/* Mensagem de erro geral */}
+          {errors.general && (
+            <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+              <IconSymbol name="exclamationmark.circle.fill" size={20} color={colors.error} />
+              <ThemedText style={[styles.errorText, { color: colors.error }]}>
+                {errors.general}
+              </ThemedText>
+            </View>
+          )}
 
           {/* Avatar */}
           <View style={styles.avatarSection}>
@@ -147,16 +178,29 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
                 styles.input,
                 {
                   backgroundColor: colors.background,
-                  borderColor: colors.border,
+                  borderColor: errors.name ? colors.error : colors.border,
                   color: colors.text,
                 },
               ]}
               value={name}
-              onChangeText={setName}
+              onChangeText={(text) => {
+                setName(text);
+                if (errors.name) {
+                  setErrors({ ...errors, name: undefined });
+                }
+              }}
               placeholder="Seu nome completo"
               placeholderTextColor={colors.icon}
               autoCapitalize="words"
             />
+            {errors.name && (
+              <View style={styles.fieldErrorContainer}>
+                <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+                <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                  {errors.name}
+                </ThemedText>
+              </View>
+            )}
           </View>
 
           {/* E-mail */}
@@ -167,18 +211,31 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
                 styles.input,
                 {
                   backgroundColor: colors.background,
-                  borderColor: colors.border,
+                  borderColor: errors.email ? colors.error : colors.border,
                   color: colors.text,
                 },
               ]}
               value={email}
-              onChangeText={setEmail}
+              onChangeText={(text) => {
+                setEmail(text);
+                if (errors.email) {
+                  setErrors({ ...errors, email: undefined });
+                }
+              }}
               placeholder="seu.email@exemplo.com"
               placeholderTextColor={colors.icon}
               keyboardType="email-address"
               autoCapitalize="none"
               autoCorrect={false}
             />
+            {errors.email && (
+              <View style={styles.fieldErrorContainer}>
+                <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+                <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                  {errors.email}
+                </ThemedText>
+              </View>
+            )}
           </View>
 
           {/* Seção de Alteração de Senha */}
@@ -193,19 +250,24 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
             {/* Senha Atual */}
             <View style={styles.field}>
               <ThemedText style={styles.label}>Senha Atual</ThemedText>
-              <View style={styles.passwordInputContainer}>
+              <View style={[styles.passwordInputContainer, { borderColor: errors.currentPassword ? colors.error : colors.border, borderWidth: 1, borderRadius: 8 }]}>
                 <TextInput
                   style={[
                     styles.input,
                     styles.passwordInput,
                     {
                       backgroundColor: colors.background,
-                      borderColor: colors.border,
+                      borderColor: 'transparent',
                       color: colors.text,
                     },
                   ]}
                   value={currentPassword}
-                  onChangeText={setCurrentPassword}
+                  onChangeText={(text) => {
+                    setCurrentPassword(text);
+                    if (errors.currentPassword) {
+                      setErrors({ ...errors, currentPassword: undefined });
+                    }
+                  }}
                   placeholder="Digite sua senha atual"
                   placeholderTextColor={colors.icon}
                   secureTextEntry={!showCurrentPassword}
@@ -223,24 +285,37 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
                   />
                 </TouchableOpacity>
               </View>
+              {errors.currentPassword && (
+                <View style={styles.fieldErrorContainer}>
+                  <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+                  <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                    {errors.currentPassword}
+                  </ThemedText>
+                </View>
+              )}
             </View>
 
             {/* Nova Senha */}
             <View style={styles.field}>
               <ThemedText style={styles.label}>Nova Senha</ThemedText>
-              <View style={styles.passwordInputContainer}>
+              <View style={[styles.passwordInputContainer, { borderColor: errors.newPassword ? colors.error : colors.border, borderWidth: 1, borderRadius: 8 }]}>
                 <TextInput
                   style={[
                     styles.input,
                     styles.passwordInput,
                     {
                       backgroundColor: colors.background,
-                      borderColor: colors.border,
+                      borderColor: 'transparent',
                       color: colors.text,
                     },
                   ]}
                   value={newPassword}
-                  onChangeText={setNewPassword}
+                  onChangeText={(text) => {
+                    setNewPassword(text);
+                    if (errors.newPassword) {
+                      setErrors({ ...errors, newPassword: undefined });
+                    }
+                  }}
                   placeholder="Digite a nova senha"
                   placeholderTextColor={colors.icon}
                   secureTextEntry={!showNewPassword}
@@ -258,25 +333,40 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
                   />
                 </TouchableOpacity>
               </View>
-              <ThemedText style={styles.hint}>Mínimo de 6 caracteres</ThemedText>
+              {errors.newPassword && (
+                <View style={styles.fieldErrorContainer}>
+                  <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+                  <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                    {errors.newPassword}
+                  </ThemedText>
+                </View>
+              )}
+              {!errors.newPassword && (
+                <ThemedText style={styles.hint}>Mínimo de 6 caracteres</ThemedText>
+              )}
             </View>
 
             {/* Confirmar Nova Senha */}
             <View style={styles.field}>
               <ThemedText style={styles.label}>Confirmar Nova Senha</ThemedText>
-              <View style={styles.passwordInputContainer}>
+              <View style={[styles.passwordInputContainer, { borderColor: errors.confirmPassword ? colors.error : colors.border, borderWidth: 1, borderRadius: 8 }]}>
                 <TextInput
                   style={[
                     styles.input,
                     styles.passwordInput,
                     {
                       backgroundColor: colors.background,
-                      borderColor: colors.border,
+                      borderColor: 'transparent',
                       color: colors.text,
                     },
                   ]}
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(text) => {
+                    setConfirmPassword(text);
+                    if (errors.confirmPassword) {
+                      setErrors({ ...errors, confirmPassword: undefined });
+                    }
+                  }}
                   placeholder="Confirme a nova senha"
                   placeholderTextColor={colors.icon}
                   secureTextEntry={!showConfirmPassword}
@@ -294,6 +384,14 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
                   />
                 </TouchableOpacity>
               </View>
+              {errors.confirmPassword && (
+                <View style={styles.fieldErrorContainer}>
+                  <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+                  <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                    {errors.confirmPassword}
+                  </ThemedText>
+                </View>
+              )}
             </View>
           </View>
 
@@ -324,6 +422,19 @@ const styles = StyleSheet.create({
   formTitle: {
     marginBottom: 24,
     textAlign: 'center',
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    flex: 1,
   },
   avatarSection: {
     alignItems: 'center',
@@ -374,6 +485,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     fontSize: 16,
+  },
+  fieldErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 4,
+  },
+  fieldErrorText: {
+    fontSize: 13,
   },
   passwordSection: {
     marginTop: 32,

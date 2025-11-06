@@ -61,6 +61,8 @@ const MAPPING: IconMapping = {
   'lightbulb.fill': { library: 'material', name: 'lightbulb' },
   eye: { library: 'material', name: 'visibility' },
   'eye.slash': { library: 'material', name: 'visibility-off' },
+  'exclamationmark.circle': { library: 'material', name: 'error' },
+  'exclamationmark.circle.fill': { library: 'material', name: 'error' },
 } as const;
 
 /**

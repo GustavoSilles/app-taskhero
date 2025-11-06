@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
+import { IconSymbol } from '../ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { TaskPriority } from '@/types';
@@ -23,10 +24,27 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
 
   const [title, setTitle] = useState(initialData?.title || '');
   const [priority, setPriority] = useState<TaskPriority>(initialData?.priority || 'medium');
+  const [errors, setErrors] = useState<{ title?: string; general?: string }>({});
+
+  const validateForm = () => {
+    const newErrors: { title?: string } = {};
+
+    if (!title.trim()) {
+      newErrors.title = 'O título é obrigatório';
+    } else if (title.trim().length < 3) {
+      newErrors.title = 'O título deve ter pelo menos 3 caracteres';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = () => {
-    if (!title.trim()) {
-      alert('Título é obrigatório');
+    // Limpa erros anteriores
+    setErrors({});
+
+    // Valida o formulário
+    if (!validateForm()) {
       return;
     }
 
@@ -50,6 +68,16 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
             {initialData ? 'Editar Tarefa' : 'Nova Tarefa'}
           </ThemedText>
 
+          {/* Mensagem de erro geral */}
+          {errors.general && (
+            <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+              <IconSymbol name="exclamationmark.circle.fill" size={20} color={colors.error} />
+              <ThemedText style={[styles.errorText, { color: colors.error }]}>
+                {errors.general}
+              </ThemedText>
+            </View>
+          )}
+
         {/* Título */}
         <View style={styles.field}>
           <ThemedText style={styles.label}>Título *</ThemedText>
@@ -58,15 +86,28 @@ export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
               styles.input,
               {
                 backgroundColor: colors.background,
-                borderColor: colors.border,
+                borderColor: errors.title ? colors.error : colors.border,
                 color: colors.text,
               },
             ]}
             value={title}
-            onChangeText={setTitle}
+            onChangeText={(text) => {
+              setTitle(text);
+              if (errors.title) {
+                setErrors({ ...errors, title: undefined });
+              }
+            }}
             placeholder="Ex: Revisar documentação"
             placeholderTextColor={colors.icon}
           />
+          {errors.title && (
+            <View style={styles.fieldErrorContainer}>
+              <IconSymbol name="exclamationmark.circle" size={14} color={colors.error} />
+              <ThemedText style={[styles.fieldErrorText, { color: colors.error }]}>
+                {errors.title}
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         {/* Prioridade */}
@@ -134,6 +175,19 @@ const styles = StyleSheet.create({
   formTitle: {
     marginBottom: 24,
   },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 16,
+    gap: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    flex: 1,
+  },
   field: {
     marginBottom: 20,
   },
@@ -147,6 +201,15 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     fontSize: 16,
+  },
+  fieldErrorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 6,
+    gap: 4,
+  },
+  fieldErrorText: {
+    fontSize: 13,
   },
   textArea: {
     height: 80,
