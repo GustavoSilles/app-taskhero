@@ -67,6 +67,7 @@ const MAPPING: IconMapping = {
   'exclamationmark.triangle.fill': { library: 'material', name: 'warning' },
   'info.circle.fill': { library: 'material', name: 'info' },
   xmark: { library: 'material', name: 'close' },
+  'cart.fill': { library: 'material', name: 'shopping-cart' },
 } as const;
 
 /**

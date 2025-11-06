@@ -7,8 +7,11 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { useAuth } from '@/contexts/auth-context';
+import { useToast } from '@/contexts/toast-context';
 import { useState, useRef, useEffect } from 'react';
 import { AVATARS } from '@/constants/avatars';
+import { BuyAvatarModal } from '@/components/buy-avatar-modal';
+import { mockUser } from '@/mocks/user';
 
 // Dados mockados - posteriormente serão substituídos por dados reais
 const mockBadges = [
@@ -65,13 +68,19 @@ export default function RewardsScreen() {
   const avatarsSectionRef = useRef<View>(null);
   
   const [badges] = useState(mockBadges);
-  const [avatars] = useState(AVATARS);
+  const [avatars, setAvatars] = useState(AVATARS);
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user, updateSelectedAvatar } = useAuth();
+  const toast = useToast();
   
   // Usa o avatar do usuário ou o padrão
   const [selectedAvatar, setSelectedAvatar] = useState(user?.selectedAvatarId || '1');
+  const [showBuyModal, setShowBuyModal] = useState(false);
+  const [selectedAvatarToBuy, setSelectedAvatarToBuy] = useState<typeof AVATARS[0] | null>(null);
+  
+  // TaskCoins do usuário (depois vem do backend)
+  const [userCoins, setUserCoins] = useState(mockUser.taskCoins);
 
   const unlockedBadges = badges.filter((b) => b.unlocked).length;
   const totalBadges = badges.length;
@@ -101,13 +110,69 @@ export default function RewardsScreen() {
     }
   }, [user?.selectedAvatarId]);
 
-  // Função para selecionar avatar
+  // Função para selecionar ou comprar avatar
   const handleSelectAvatar = (avatarId: string) => {
     const avatar = avatars.find(a => a.id === avatarId);
-    if (avatar && avatar.unlocked) {
+    
+    if (!avatar) return;
+    
+    // Se o avatar está desbloqueado, seleciona
+    if (avatar.unlocked) {
       setSelectedAvatar(avatarId);
       updateSelectedAvatar(avatarId);
+    } else {
+      // Se está bloqueado, abre modal de compra
+      setSelectedAvatarToBuy(avatar);
+      setShowBuyModal(true);
     }
+  };
+
+  // Função para confirmar compra
+  const handleConfirmPurchase = () => {
+    if (!selectedAvatarToBuy) return;
+    
+    // Verifica se tem saldo suficiente
+    if (userCoins < selectedAvatarToBuy.cost) {
+      setShowBuyModal(false);
+      toast.error('Saldo Insuficiente', `Você precisa de mais ${selectedAvatarToBuy.cost - userCoins} TaskCoins`);
+      return;
+    }
+
+    // Deduz as moedas
+    setUserCoins(prev => prev - selectedAvatarToBuy.cost);
+
+    // Desbloqueia o avatar
+    setAvatars(prev => 
+      prev.map(avatar => 
+        avatar.id === selectedAvatarToBuy.id 
+          ? { ...avatar, unlocked: true }
+          : avatar
+      )
+    );
+
+    // Seleciona automaticamente o avatar comprado
+    setSelectedAvatar(selectedAvatarToBuy.id);
+    updateSelectedAvatar(selectedAvatarToBuy.id);
+
+    // Fecha o modal
+    setShowBuyModal(false);
+
+    // Mostra toast de sucesso
+    setTimeout(() => {
+      toast.success(
+        'Avatar Desbloqueado! 🎉',
+        `${selectedAvatarToBuy.name} foi adicionado à sua coleção!`
+      );
+    }, 300);
+
+    // Limpa o avatar selecionado
+    setSelectedAvatarToBuy(null);
+  };
+
+  // Função para cancelar compra
+  const handleCancelPurchase = () => {
+    setShowBuyModal(false);
+    setSelectedAvatarToBuy(null);
   };
 
   return (
@@ -170,7 +235,7 @@ export default function RewardsScreen() {
                 },
               ]}
               onPress={() => handleSelectAvatar(avatar.id)}
-              disabled={!avatar.unlocked}>
+              activeOpacity={0.7}>
               <View style={styles.avatarImageContainer}>
                 <Image 
                   source={avatar.image} 
@@ -253,6 +318,15 @@ export default function RewardsScreen() {
           </ThemedText>
         </ThemedView>
       </View>
+
+      {/* Modal de Compra de Avatar */}
+      <BuyAvatarModal
+        visible={showBuyModal}
+        avatar={selectedAvatarToBuy}
+        userCoins={userCoins}
+        onConfirm={handleConfirmPurchase}
+        onCancel={handleCancelPurchase}
+      />
     </ScrollView>
   );
 }
