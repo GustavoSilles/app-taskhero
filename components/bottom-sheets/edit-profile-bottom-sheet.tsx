@@ -1,6 +1,6 @@
 import React, { useMemo, forwardRef } from 'react';
 import { StyleSheet } from 'react-native';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { EditProfileForm } from '../forms/edit-profile-form';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
@@ -23,7 +23,7 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
     
-    const snapPoints = useMemo(() => ['80%', '95%'], []);    const renderBackdrop = (props: BottomSheetBackdropProps) => (
+    const snapPoints = useMemo(() => ['85%', '100%'], []);    const renderBackdrop = (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
         {...props}
         disappearsOnIndex={-1}
@@ -44,14 +44,14 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
         handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.primary }]}
         backgroundStyle={[styles.background, { backgroundColor: colors.surface }]}
       >
-        <BottomSheetView style={styles.container}>
+        <BottomSheetScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
           <EditProfileForm
             initialData={initialData}
             onSubmit={onSubmit}
             onCancel={onClose}
             onAvatarEdit={onAvatarEdit}
           />
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheet>
     );
   }
@@ -62,6 +62,9 @@ EditProfileBottomSheet.displayName = 'EditProfileBottomSheet';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: 20,
   },
   handleIndicator: {
     width: 40,

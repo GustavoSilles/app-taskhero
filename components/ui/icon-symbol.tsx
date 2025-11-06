@@ -59,6 +59,8 @@ const MAPPING: IconMapping = {
   'diamond.fill': { library: 'material', name: 'diamond' },
   'trophy.fill': { library: 'material', name: 'emoji-events' },
   'lightbulb.fill': { library: 'material', name: 'lightbulb' },
+  eye: { library: 'material', name: 'visibility' },
+  'eye.slash': { library: 'material', name: 'visibility-off' },
 } as const;
 
 /**

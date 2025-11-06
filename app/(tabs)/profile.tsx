@@ -33,9 +33,17 @@ export default function ProfileScreen() {
   const handleSaveProfile = (data: any) => {
     console.log('Salvar perfil:', data);
     // TODO: Implementar atualização do perfil no backend
+    
+    // Verifica se está alterando senha
+    const isChangingPassword = data.currentPassword && data.newPassword;
+    
+    const successMessage = isChangingPassword 
+      ? 'Suas informações e senha foram atualizadas com sucesso!'
+      : 'Suas informações foram atualizadas com sucesso!';
+    
     Alert.alert(
       'Perfil Atualizado',
-      'Suas informações foram atualizadas com sucesso!',
+      successMessage,
       [{ text: 'OK' }]
     );
     editProfileBottomSheetRef.current?.close();
