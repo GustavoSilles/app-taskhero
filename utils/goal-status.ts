@@ -46,6 +46,20 @@ export function canDeleteGoal(status: GoalStatus): boolean {
 }
 
 /**
+ * Uma meta expirada ainda pode ser editada e concluída
+ */
+export function canEditGoal(status: GoalStatus): boolean {
+  return status === 'in_progress' || status === 'expired';
+}
+
+/**
+ * Tarefas podem ser adicionadas em metas em andamento ou expiradas
+ */
+export function canAddTasks(status: GoalStatus): boolean {
+  return status === 'in_progress' || status === 'expired';
+}
+
+/**
  * RN07-RN08: Calcula pontos ganhos ao completar uma meta
  */
 export function calculateGoalPoints(status: GoalStatus): number {

@@ -68,6 +68,8 @@ const MAPPING: IconMapping = {
   'info.circle.fill': { library: 'material', name: 'info' },
   xmark: { library: 'material', name: 'close' },
   'cart.fill': { library: 'material', name: 'shopping-cart' },
+  'chart.line.uptrend.xyaxis': { library: 'material', name: 'trending-up' },
+  'bell.fill': { library: 'material', name: 'notifications' },
 } as const;
 
 /**

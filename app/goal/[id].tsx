@@ -14,7 +14,7 @@ import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { useGoals } from '@/contexts/goals-context';
 import { useTasks } from '@/contexts/tasks-context';
-import { canDeleteGoal, formatDeadlineMessage, calculateGoalPoints } from '@/utils/goal-status';
+import { canDeleteGoal, formatDeadlineMessage, calculateGoalPoints, canEditGoal, canAddTasks } from '@/utils/goal-status';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { ConfirmationModal } from '@/components/confirmation-modal';
@@ -193,8 +193,14 @@ export default function GoalDetailScreen() {
     try {
       const updatedGoal = await concludeGoal(goal.id);
       setGoal(updatedGoal); // Atualiza o estado local
-      const points = calculateGoalPoints('completed');
-      toast.success('Parabéns!', `Meta concluída! Você ganhou ${points} pontos! 🎉`);
+      
+      // Calcula pontos baseado no status real da meta concluída
+      const points = calculateGoalPoints(updatedGoal.status);
+      const message = updatedGoal.status === 'completed_late' 
+        ? `Meta concluída com atraso! Você ganhou ${points} pontos.`
+        : `Meta concluída! Você ganhou ${points} pontos! 🎉`;
+      
+      toast.success('Parabéns!', message);
     } catch (error: any) {
       console.error('Erro ao concluir meta:', error);
       toast.error('Erro', error.message || 'Não foi possível concluir a meta');
@@ -346,7 +352,7 @@ export default function GoalDetailScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle">Tarefas ({tasks.length})</ThemedText>
-          {goal.status === 'in_progress' && (
+          {canAddTasks(goal.status) && (
             <TouchableOpacity onPress={handleOpenTaskBottomSheet}>
               <ThemedText style={[styles.addButton, { color: colors.primary }]}>
                 + Adicionar
@@ -360,12 +366,12 @@ export default function GoalDetailScreen() {
             icon="checklist"
             title="Nenhuma tarefa"
             description={
-              goal.status === 'in_progress'
+              canAddTasks(goal.status)
                 ? "Adicione tarefas para começar a trabalhar nesta meta"
                 : "Esta meta não possui tarefas"
             }
-            actionLabel={goal.status === 'in_progress' ? "Adicionar Tarefa" : undefined}
-            onActionPress={goal.status === 'in_progress' ? handleOpenTaskBottomSheet : undefined}
+            actionLabel={canAddTasks(goal.status) ? "Adicionar Tarefa" : undefined}
+            onActionPress={canAddTasks(goal.status) ? handleOpenTaskBottomSheet : undefined}
           />
         ) : (
           tasks.map((task) => (
@@ -373,8 +379,8 @@ export default function GoalDetailScreen() {
               key={task.id}
               {...task}
               title={task.title}
-              onToggle={goal.status === 'in_progress' ? () => handleToggleTask(task.id) : undefined}
-              onDelete={goal.status === 'in_progress' ? () => handleDeleteTask(task.id) : undefined}
+              onToggle={canEditGoal(goal.status) ? () => handleToggleTask(task.id) : undefined}
+              onDelete={canEditGoal(goal.status) ? () => handleDeleteTask(task.id) : undefined}
             />
           ))
         )}
@@ -382,7 +388,7 @@ export default function GoalDetailScreen() {
 
       {/* Ações da Meta */}
       <View style={styles.actions}>
-        {goal.status === 'in_progress' && (
+        {canEditGoal(goal.status) && (
           <TouchableOpacity
             style={[styles.actionButton, { backgroundColor: colors.primary }]}
             onPress={handleOpenEditGoalBottomSheet}>
@@ -391,7 +397,7 @@ export default function GoalDetailScreen() {
           </TouchableOpacity>
         )}
 
-        {goal.status === 'in_progress' && (
+        {canEditGoal(goal.status) && (
           <TouchableOpacity
             style={[
               styles.actionButton, 
@@ -405,7 +411,9 @@ export default function GoalDetailScreen() {
             <IconSymbol name="checkmark" size={20} color="#fff" />
             <ThemedText style={styles.actionButtonText}>
               {canCompleteGoal() 
-                ? 'Marcar como Concluída' 
+                ? goal.status === 'expired' 
+                  ? 'Marcar como Concluída (com atraso)'
+                  : 'Marcar como Concluída'
                 : tasks.length === 0 
                   ? 'Adicione tarefas primeiro'
                   : 'Complete todas as tarefas'}
