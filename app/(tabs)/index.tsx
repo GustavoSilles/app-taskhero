@@ -7,11 +7,10 @@ import { EmptyState } from '@/components/empty-state';
 import { CreateGoalBottomSheet } from '@/components/bottom-sheets/create-goal-bottom-sheet';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
-import { useState, useMemo, useRef, useCallback } from 'react';
-import { mockGoals, filterGoalsByStatus, sortGoals } from '@/mocks/goals';
-import { mockUser } from '@/mocks/user';
+import { useAuth } from '@/contexts/auth-context';
+import { useGoals } from '@/contexts/goals-context';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { GoalStatus } from '@/types';
-import { calculateGoalStatus } from '@/utils/goal-status';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,46 +20,42 @@ export default function HomeScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const toast = useToast();
+  const { user } = useAuth();
+  const { goals, isLoading, fetchGoals, createGoal: createGoalAPI, currentPage, totalPages, totalItems } = useGoals();
 
   const [currentFilter, setCurrentFilter] = useState<GoalStatus | 'all'>('all');
-  const [currentSort, setCurrentSort] = useState<'deadline' | 'created' | 'progress' | 'status'>('deadline');
+  const [currentSort, setCurrentSort] = useState<'data_fim' | 'createdAt' | 'progress_calculated' | 'status'>('createdAt');
   const [showFilters, setShowFilters] = useState(false);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
   
   // Ref para o Bottom Sheet
   const goalBottomSheetRef = useRef<BottomSheet>(null);
 
-  // Filtrar e ordenar metas
-  const filteredAndSortedGoals = useMemo(() => {
-    const filtered = filterGoalsByStatus(mockGoals, currentFilter);
-    return sortGoals(filtered, currentSort);
-  }, [currentFilter, currentSort]);
+  // Carrega metas ao montar o componente e quando filtro/ordenação mudam
+  useEffect(() => {
+    if (user) {
+      const status = currentFilter === 'all' ? null : currentFilter;
+      fetchGoals(1, status, currentSort, 'DESC', false);
+    }
+  }, [user, currentFilter, currentSort, fetchGoals]);
 
-  // Paginação de metas
-  const paginatedGoals = useMemo(() => {
-    const endIndex = currentPage * ITEMS_PER_PAGE;
-    return filteredAndSortedGoals.slice(0, endIndex);
-  }, [filteredAndSortedGoals, currentPage]);
-
-  const hasMoreGoals = filteredAndSortedGoals.length > paginatedGoals.length;
-  const totalGoals = filteredAndSortedGoals.length;
+  const hasMoreGoals = currentPage < totalPages;
 
   // Resetar página quando mudar filtro ou ordenação
   const handleFilterChange = useCallback((filter: GoalStatus | 'all') => {
     setCurrentFilter(filter);
-    setCurrentPage(1);
   }, []);
 
-  const handleSortChange = useCallback((sort: 'deadline' | 'created' | 'progress' | 'status') => {
+  const handleSortChange = useCallback((sort: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status') => {
     setCurrentSort(sort);
-    setCurrentPage(1);
   }, []);
 
   const handleLoadMore = useCallback(() => {
-    setCurrentPage(prev => prev + 1);
-  }, []);
+    if (!isLoading && hasMoreGoals) {
+      const status = currentFilter === 'all' ? null : currentFilter;
+      fetchGoals(currentPage + 1, status, currentSort, 'DESC', true);
+    }
+  }, [currentPage, hasMoreGoals, isLoading, currentFilter, currentSort, fetchGoals]);
 
   // Funções para abrir/fechar Bottom Sheet
   const handleOpenGoalBottomSheet = useCallback(() => {
@@ -78,33 +73,28 @@ export default function HomeScreen() {
     setIsBottomSheetOpen(index !== -1);
   }, []);
 
-  const handleCreateGoal = useCallback((data: any) => {
-    console.log('Nova meta:', data);
-    
-    const status = calculateGoalStatus(
-      data.endDate,
-      undefined,
-      0,
-      0
-    );
+  const handleCreateGoal = useCallback(async (data: any) => {
+    try {
+      // Formata as datas para ISO 8601
+      const goalData = {
+        titulo: data.title,
+        descricao: data.description,
+        data_inicio: data.startDate.toISOString(),
+        data_fim: data.endDate.toISOString(),
+      };
 
-    const newGoal = {
-      id: Date.now().toString(),
-      userId: '1',
-      ...data,
-      status,
-      progress: 0,
-      totalTasks: 0,
-      completedTasks: 0,
-    };
-
-    console.log('Meta criada:', newGoal);
-    handleCloseGoalBottomSheet();
-    
-    setTimeout(() => {
-      toast.success('Sucesso!', 'Meta criada com sucesso! Agora adicione tarefas para começar.');
-    }, 300);
-  }, [handleCloseGoalBottomSheet, toast]);
+      await createGoalAPI(goalData);
+      
+      handleCloseGoalBottomSheet();
+      
+      setTimeout(() => {
+        toast.success('Sucesso!', 'Meta criada com sucesso! Agora adicione tarefas para começar.');
+      }, 300);
+    } catch (error) {
+      console.error('Erro ao criar meta:', error);
+      toast.error('Erro', 'Não foi possível criar a meta. Tente novamente.');
+    }
+  }, [createGoalAPI, handleCloseGoalBottomSheet, toast]);
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -112,7 +102,7 @@ export default function HomeScreen() {
         <View style={styles.header}>
         <View>
           <ThemedText style={styles.welcomeText}>
-            Olá, {mockUser.name.split(' ')[0]}!
+            Olá, {user?.name.split(' ')[0] || 'Usuário'}!
           </ThemedText>
           <ThemedText style={styles.subtitle}>
             Continue progredindo nas suas metas
@@ -147,17 +137,17 @@ export default function HomeScreen() {
           />
         )}
 
-        {filteredAndSortedGoals.length === 0 ? (
+        {goals.length === 0 ? (
           <EmptyState
             icon="flag"
-            title="Nenhuma meta encontrada"
-            description="Crie sua primeira meta e comece sua jornada!"
+            title={isLoading ? "Carregando..." : "Nenhuma meta encontrada"}
+            description={isLoading ? "Buscando suas metas..." : "Crie sua primeira meta e comece sua jornada!"}
             actionLabel="Criar Meta"
             onActionPress={handleOpenGoalBottomSheet}
           />
         ) : (
           <>
-            {paginatedGoals.map((goal) => (
+            {goals.map((goal: any) => (
               <GoalCard
                 key={goal.id}
                 {...goal}
@@ -170,17 +160,18 @@ export default function HomeScreen() {
             {hasMoreGoals && (
               <View style={styles.paginationContainer}>
                 <ThemedText style={styles.paginationInfo}>
-                  Mostrando {paginatedGoals.length} de {totalGoals} metas
+                  Mostrando {goals.length} de {totalItems} metas
                 </ThemedText>
                 <TouchableOpacity
                   onPress={handleLoadMore}
                   style={[styles.loadMoreButton, { backgroundColor: colors.primary }]}
                   activeOpacity={0.8}
+                  disabled={isLoading}
                 >
                   <ThemedText style={styles.loadMoreButtonText}>
-                    Carregar mais
+                    {isLoading ? 'Carregando...' : 'Carregar mais'}
                   </ThemedText>
-                  <Ionicons name="chevron-down" size={18} color="#fff" />
+                  {!isLoading && <Ionicons name="chevron-down" size={18} color="#fff" />}
                 </TouchableOpacity>
               </View>
             )}

@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -12,8 +12,8 @@ import { EmptyState } from '@/components/empty-state';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
-import { mockGoals } from '@/mocks/goals';
-import { getTasksByGoalId } from '@/mocks/tasks';
+import { useGoals } from '@/contexts/goals-context';
+import { useTasks } from '@/contexts/tasks-context';
 import { canDeleteGoal, formatDeadlineMessage, calculateGoalPoints } from '@/utils/goal-status';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -25,17 +25,41 @@ export default function GoalDetailScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const toast = useToast();
+  const {deleteGoal, updateGoal, concludeGoal, getGoalById } = useGoals();
+  const { tasks, fetchTasks, createTask, updateTask, deleteTask: deleteTaskFromContext, concludeTask } = useTasks();
 
-  const [tasks, setTasks] = useState(getTasksByGoalId(id || ''));
   const [showDeleteGoalModal, setShowDeleteGoalModal] = useState(false);
   const [showCompleteGoalModal, setShowCompleteGoalModal] = useState(false);
+  const [goal, setGoal] = useState<any>(null);
   
   // Refs para os Bottom Sheets
   const taskBottomSheetRef = useRef<BottomSheet>(null);
   const editGoalBottomSheetRef = useRef<BottomSheet>(null);
 
-  // Buscar meta (depois vem do backend)
-  const goal = mockGoals.find((g) => g.id === id);
+  // Buscar meta do contexto ou do backend
+  useEffect(() => {
+    const loadGoal = async () => {
+      if (!id) return;
+      
+      try {
+        const goalData = await getGoalById(id);
+        setGoal(goalData);
+      } catch (error) {
+        console.error('Erro ao carregar meta:', error);
+        setGoal(null);
+      }
+    };
+
+    loadGoal();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]); // Removido getGoalById das dependências para evitar loops
+
+  // Carrega as tarefas quando a meta é carregada
+  useEffect(() => {
+    if (goal?.id) {
+      fetchTasks(goal.id);
+    }
+  }, [goal?.id, fetchTasks]);
 
   // Funções para abrir/fechar Bottom Sheet de Tarefa
   const handleOpenTaskBottomSheet = useCallback(() => {
@@ -55,22 +79,72 @@ export default function GoalDetailScreen() {
     editGoalBottomSheetRef.current?.close();
   }, []);
 
-  const handleAddTask = useCallback((taskData: any) => {
-    console.log('Nova tarefa:', taskData);
-    handleCloseTaskBottomSheet();
-    setTimeout(() => {
-      toast.success('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
-    }, 300);
-  }, [handleCloseTaskBottomSheet, toast]);
+  const handleAddTask = useCallback(async (taskData: any) => {
+    if (!goal) return;
+    
+    try {
+      // Mapeia prioridade do frontend para backend
+      let prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' = 'MEDIA';
+      switch (taskData.priority) {
+        case 'low':
+          prioridade = 'BAIXA';
+          break;
+        case 'high':
+          prioridade = 'ALTA';
+          break;
+        default:
+          prioridade = 'MEDIA';
+      }
 
-  const handleEditGoal = useCallback((goalData: any) => {
-    console.log('Meta editada:', goalData);
-    handleCloseEditGoalBottomSheet();
-    setTimeout(() => {
-      toast.success('Sucesso', 'Meta atualizada com sucesso!');
-    }, 300);
-    // Aqui você faria a chamada para a API para atualizar a meta
-  }, [handleCloseEditGoalBottomSheet, toast]);
+      await createTask(goal.id, {
+        titulo: taskData.title,
+        prioridade,
+      });
+      
+      // Recarrega a meta específica para atualizar o progresso (forçando refresh do backend)
+      const updatedGoal = await getGoalById(goal.id, true);
+      setGoal(updatedGoal);
+
+      handleCloseTaskBottomSheet();
+      setTimeout(() => {
+        toast.success('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
+      }, 300);
+    } catch (error: any) {
+      console.error('Erro ao criar tarefa:', error);
+      toast.error('Erro', error.message || 'Não foi possível criar a tarefa');
+    }
+  }, [goal, createTask, getGoalById, handleCloseTaskBottomSheet, toast]);
+
+  const handleEditGoal = useCallback(async (goalData: any) => {
+    if (!goal) return;
+    
+    try {
+      // Formata os dados para o backend
+      const updateData: any = {
+        titulo: goalData.title,
+        descricao: goalData.description,
+      };
+
+      // Só inclui as datas se foram alteradas
+      if (goalData.startDate) {
+        updateData.data_inicio = goalData.startDate.toISOString();
+      }
+      if (goalData.endDate) {
+        updateData.data_fim = goalData.endDate.toISOString();
+      }
+
+      const updatedGoal = await updateGoal(goal.id, updateData);
+      setGoal(updatedGoal); // Atualiza o estado local
+      
+      handleCloseEditGoalBottomSheet();
+      setTimeout(() => {
+        toast.success('Sucesso', 'Meta atualizada com sucesso!');
+      }, 300);
+    } catch (error: any) {
+      console.error('Erro ao editar meta:', error);
+      toast.error('Erro', error.message || 'Não foi possível atualizar a meta');
+    }
+  }, [goal, updateGoal, handleCloseEditGoalBottomSheet, toast]);
 
   if (!goal) {
     return (
@@ -94,36 +168,109 @@ export default function GoalDetailScreen() {
     }
   };
 
-  const confirmDeleteGoal = () => {
+  const confirmDeleteGoal = async () => {
     setShowDeleteGoalModal(false);
-    console.log('Excluir meta:', goal.id);
+    
+    // Navega imediatamente para evitar tentar carregar a meta deletada
     router.back();
+    
+    try {
+      await deleteGoal(goal.id);
+      toast.success('Sucesso', 'Meta excluída com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao excluir meta:', error);
+      toast.error('Erro', error.message || 'Não foi possível excluir a meta');
+    }
   };
 
   const handleCompleteGoal = () => {
     setShowCompleteGoalModal(true);
   };
 
-  const confirmCompleteGoal = () => {
+  const confirmCompleteGoal = async () => {
     setShowCompleteGoalModal(false);
-    console.log('Concluir meta:', goal.id);
-    const points = calculateGoalPoints('completed');
-    toast.success('Parabéns!', `Meta concluída! Você ganhou ${points} pontos! 🎉`);
+    
+    try {
+      const updatedGoal = await concludeGoal(goal.id);
+      setGoal(updatedGoal); // Atualiza o estado local
+      const points = calculateGoalPoints('completed');
+      toast.success('Parabéns!', `Meta concluída! Você ganhou ${points} pontos! 🎉`);
+    } catch (error: any) {
+      console.error('Erro ao concluir meta:', error);
+      toast.error('Erro', error.message || 'Não foi possível concluir a meta');
+    }
   };
 
-  const handleToggleTask = (taskId: string) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task) =>
-        task.id === taskId
-          ? { ...task, completed: !task.completed }
-          : task
-      )
-    );
+  const handleToggleTask = async (taskId: string) => {
+    if (!goal) return;
+    
+    try {
+      // Encontra a tarefa para verificar o status atual
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      // Se já está concluída, volta para pendente
+      // Se está pendente, marca como concluída
+      if (task.completed) {
+        // Mapeia prioridade para o formato do backend
+        let prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' = 'MEDIA';
+        switch (task.priority) {
+          case 'low':
+            prioridade = 'BAIXA';
+            break;
+          case 'high':
+            prioridade = 'ALTA';
+            break;
+          default:
+            prioridade = 'MEDIA';
+        }
+        
+        await updateTask(goal.id, taskId, { 
+          titulo: task.title, 
+          prioridade,
+          status: 'PENDENTE'
+        });
+      } else {
+        await concludeTask(goal.id, taskId);
+      }
+      
+      // Recarrega a meta específica para atualizar o progresso (forçando refresh do backend)
+      const updatedGoal = await getGoalById(goal.id, true);
+      setGoal(updatedGoal);
+      
+      toast.success('Sucesso', 'Tarefa atualizada!');
+    } catch (error: any) {
+      console.error('Erro ao alternar tarefa:', error);
+      toast.error('Erro', error.message || 'Não foi possível atualizar a tarefa');
+    }
   };
 
-  const handleDeleteTask = (taskId: string) => {
-    setTasks((prevTasks) => prevTasks.filter((task) => task.id !== taskId));
-    toast.success('Sucesso', 'Tarefa excluída com sucesso!');
+  const handleDeleteTask = async (taskId: string) => {
+    if (!goal) return;
+    
+    try {
+      await deleteTaskFromContext(goal.id, taskId);
+      
+      // Recarrega a meta específica para atualizar o progresso (forçando refresh do backend)
+      const updatedGoal = await getGoalById(goal.id, true);
+      setGoal(updatedGoal);
+      
+      toast.success('Sucesso', 'Tarefa excluída com sucesso!');
+    } catch (error: any) {
+      console.error('Erro ao excluir tarefa:', error);
+      toast.error('Erro', error.message || 'Não foi possível excluir a tarefa');
+    }
+  };
+
+  const getProgressColor = () => {
+    if (goal.progress < 33) return colors.error;
+    if (goal.progress < 66) return colors.warning;
+    return colors.success;
+  };
+
+  const canCompleteGoal = () => {
+    if (tasks.length === 0) return false;
+    return tasks.every(task => task.completed);
   };
 
   return (
@@ -186,12 +333,12 @@ export default function GoalDetailScreen() {
                 styles.progressFill,
                 {
                   width: `${goal.progress}%`,
-                  backgroundColor: colors.secondary,
+                  backgroundColor: getProgressColor(),
                 },
               ]}
             />
           </View>
-          <ThemedText style={styles.progressPercent}>{goal.progress}%</ThemedText>
+          <ThemedText style={styles.progressPercent}>{Math.floor(goal.progress)}%</ThemedText>
         </View>
       </View>
 
@@ -199,20 +346,26 @@ export default function GoalDetailScreen() {
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
           <ThemedText type="subtitle">Tarefas ({tasks.length})</ThemedText>
-          <TouchableOpacity onPress={handleOpenTaskBottomSheet}>
-            <ThemedText style={[styles.addButton, { color: colors.primary }]}>
-              + Adicionar
-            </ThemedText>
-          </TouchableOpacity>
+          {goal.status === 'in_progress' && (
+            <TouchableOpacity onPress={handleOpenTaskBottomSheet}>
+              <ThemedText style={[styles.addButton, { color: colors.primary }]}>
+                + Adicionar
+              </ThemedText>
+            </TouchableOpacity>
+          )}
         </View>
 
         {tasks.length === 0 ? (
           <EmptyState
             icon="checklist"
             title="Nenhuma tarefa"
-            description="Adicione tarefas para começar a trabalhar nesta meta"
-            actionLabel="Adicionar Tarefa"
-            onActionPress={handleOpenTaskBottomSheet}
+            description={
+              goal.status === 'in_progress'
+                ? "Adicione tarefas para começar a trabalhar nesta meta"
+                : "Esta meta não possui tarefas"
+            }
+            actionLabel={goal.status === 'in_progress' ? "Adicionar Tarefa" : undefined}
+            onActionPress={goal.status === 'in_progress' ? handleOpenTaskBottomSheet : undefined}
           />
         ) : (
           tasks.map((task) => (
@@ -220,8 +373,8 @@ export default function GoalDetailScreen() {
               key={task.id}
               {...task}
               title={task.title}
-              onToggle={() => handleToggleTask(task.id)}
-              onDelete={() => handleDeleteTask(task.id)}
+              onToggle={goal.status === 'in_progress' ? () => handleToggleTask(task.id) : undefined}
+              onDelete={goal.status === 'in_progress' ? () => handleDeleteTask(task.id) : undefined}
             />
           ))
         )}
@@ -229,20 +382,33 @@ export default function GoalDetailScreen() {
 
       {/* Ações da Meta */}
       <View style={styles.actions}>
-        <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: colors.primary }]}
-          onPress={handleOpenEditGoalBottomSheet}>
-          <IconSymbol name="pencil" size={20} color="#fff" />
-          <ThemedText style={styles.actionButtonText}>Editar Meta</ThemedText>
-        </TouchableOpacity>
+        {goal.status === 'in_progress' && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: colors.primary }]}
+            onPress={handleOpenEditGoalBottomSheet}>
+            <IconSymbol name="pencil" size={20} color="#fff" />
+            <ThemedText style={styles.actionButtonText}>Editar Meta</ThemedText>
+          </TouchableOpacity>
+        )}
 
         {goal.status === 'in_progress' && (
           <TouchableOpacity
-            style={[styles.actionButton, { backgroundColor: colors.success }]}
-            onPress={handleCompleteGoal}>
+            style={[
+              styles.actionButton, 
+              { 
+                backgroundColor: canCompleteGoal() ? colors.success : colors.disabled 
+              },
+              !canCompleteGoal() && styles.disabledButton
+            ]}
+            onPress={handleCompleteGoal}
+            disabled={!canCompleteGoal()}>
             <IconSymbol name="checkmark" size={20} color="#fff" />
             <ThemedText style={styles.actionButtonText}>
-              Marcar como Concluída
+              {canCompleteGoal() 
+                ? 'Marcar como Concluída' 
+                : tasks.length === 0 
+                  ? 'Adicione tarefas primeiro'
+                  : 'Complete todas as tarefas'}
             </ThemedText>
           </TouchableOpacity>
         )}

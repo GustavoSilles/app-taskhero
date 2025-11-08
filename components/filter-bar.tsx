@@ -8,9 +8,9 @@ import { GoalStatus } from '@/types';
 
 interface FilterBarProps {
   currentFilter: GoalStatus | 'all';
-  currentSort: 'deadline' | 'created' | 'progress' | 'status';
+  currentSort: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status';
   onFilterChange: (filter: GoalStatus | 'all') => void;
-  onSortChange: (sort: 'deadline' | 'created' | 'progress' | 'status') => void;
+  onSortChange: (sort: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status') => void;
 }
 
 export function FilterBar({
@@ -29,10 +29,10 @@ export function FilterBar({
     { label: 'Expiradas', value: 'expired' },
   ];
 
-  const sorts: { label: string; value: 'deadline' | 'created' | 'progress' | 'status'; icon: string }[] = [
-    { label: 'Prazo', value: 'deadline', icon: 'calendar' },
-    { label: 'Criação', value: 'created', icon: 'clock' },
-    { label: 'Progresso', value: 'progress', icon: 'chart.bar' },
+  const sorts: { label: string; value: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status'; icon: string }[] = [
+    { label: 'Criação', value: 'createdAt', icon: 'clock' },
+    { label: 'Prazo', value: 'data_fim', icon: 'calendar' },
+    { label: 'Progresso', value: 'progress_calculated', icon: 'chart.bar' },
     { label: 'Status', value: 'status', icon: 'tag' },
   ];
 

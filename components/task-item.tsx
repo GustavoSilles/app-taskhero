@@ -41,7 +41,10 @@ export function TaskItem({
   };
 
   const handleLongPress = () => {
-    setShowDeleteModal(true);
+    // Só abre o modal se onDelete estiver definido (meta não concluída)
+    if (onDelete) {
+      setShowDeleteModal(true);
+    }
   };
 
   const confirmDelete = () => {
@@ -55,7 +58,7 @@ export function TaskItem({
     <>
       <TouchableOpacity 
         onPress={onToggle}
-        onLongPress={handleLongPress}
+        onLongPress={onDelete ? handleLongPress : undefined}
         activeOpacity={0.7}
         delayLongPress={500}
       >

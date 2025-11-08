@@ -33,6 +33,7 @@ export interface Goal {
   description: string;
   startDate: Date;
   endDate: Date;
+  createdAt: Date;
   completedAt?: Date;
   status: GoalStatus;
   progress: number;

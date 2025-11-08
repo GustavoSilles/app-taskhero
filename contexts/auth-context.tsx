@@ -1,9 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/types';
-import { mockUser } from '@/mocks/user';
+import { registerUser, loginUser, decodeToken } from '@/services/api';
 
 interface AuthContextData {
   user: User | null;
+  token: string | null;
   isAuthenticated: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
@@ -14,63 +16,101 @@ interface AuthContextData {
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
+const TOKEN_KEY = '@taskhero:token';
+const USER_KEY = '@taskhero:user';
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Carrega dados salvos ao iniciar
+  useEffect(() => {
+    loadStoredData();
+  }, []);
+
+  const loadStoredData = async () => {
+    try {
+      const storedToken = await AsyncStorage.getItem(TOKEN_KEY);
+      const storedUser = await AsyncStorage.getItem(USER_KEY);
+
+      if (storedToken && storedUser) {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      }
+    } catch (error) {
+      console.error('Erro ao carregar dados salvos:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const buildUserFromBackendData = (backendData: any, userToken: string): User => {
+    const tokenData = decodeToken(userToken);
+    
+    // Calcula XP para o próximo nível (assumindo 100 XP por nível)
+    const xpPerLevel = 100;
+    const currentLevel = tokenData.level || 1;
+    const currentXP = tokenData.xp_points || 0;
+    const xpToNextLevel = (currentLevel * xpPerLevel) - currentXP;
+
+    return {
+      id: tokenData.id.toString(),
+      name: backendData.nome,
+      email: backendData.email,
+      createdAt: new Date(),
+      level: currentLevel,
+      currentXP: currentXP,
+      xpToNextLevel: Math.max(0, xpToNextLevel),
+      totalPoints: currentXP,
+      taskCoins: tokenData.task_coins || 0,
+      goalsCompletedOnTime: 0,
+      goalsCompletedLate: 0,
+      goalsExpired: 0,
+      selectedAvatarId: '1',
+    };
+  };
 
   const signIn = async (email: string, password: string) => {
     console.log('AuthContext - signIn iniciado');
     setIsLoading(true);
     try {
-      // Simulando uma chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      
-      // Por enquanto, aceita qualquer email/senha e retorna o mockUser
-      if (email && password) {
-        const authenticatedUser: User = {
-          ...mockUser,
-          email: email,
-        };
-        console.log('AuthContext - Usuário autenticado:', authenticatedUser.name);
-        setUser(authenticatedUser);
-      } else {
-        throw new Error('Email e senha são obrigatórios');
-      }
+      const response = await loginUser({ email, senha: password });
+      const userData = buildUserFromBackendData(response.data, response.data.token);
+
+      setToken(response.data.token);
+      setUser(userData);
+
+      // Salva no AsyncStorage
+      await AsyncStorage.setItem(TOKEN_KEY, response.data.token);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
+
+      console.log('AuthContext - Login bem-sucedido:', userData.name);
     } catch (error) {
-      console.error('AuthContext - Erro no signIn:', error);
       throw error;
     } finally {
       setIsLoading(false);
-      console.log('AuthContext - signIn finalizado');
     }
   };
 
   const signUp = async (name: string, email: string, password: string) => {
+    console.log('AuthContext - signUp iniciado');
     setIsLoading(true);
     try {
-      // Simulando uma chamada de API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await registerUser({ nome: name, email, senha: password });
       
-      if (name && email && password) {
-        const newUser: User = {
-          id: Date.now().toString(),
-          name: name,
-          email: email,
-          createdAt: new Date(),
-          level: 1,
-          currentXP: 0,
-          xpToNextLevel: 100,
-          totalPoints: 0,
-          taskCoins: 0,
-          goalsCompletedOnTime: 0,
-          goalsCompletedLate: 0,
-          goalsExpired: 0,
-          selectedAvatarId: '1', // Avatar padrão
-        };
-        setUser(newUser);
-      } else {
-        throw new Error('Todos os campos são obrigatórios');
-      }
+      // Após registrar, faz login automático
+      const loginResponse = await loginUser({ email, senha: password });
+      const userData = buildUserFromBackendData(loginResponse.data, loginResponse.data.token);
+
+      setToken(loginResponse.data.token);
+      setUser(userData);
+
+      // Salva no AsyncStorage
+      await AsyncStorage.setItem(TOKEN_KEY, loginResponse.data.token);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
+
+      console.log('AuthContext - Cadastro bem-sucedido:', userData.name);
     } catch (error) {
       throw error;
     } finally {
@@ -78,9 +118,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const signOut = () => {
+  const signOut = async () => {
     console.log('AuthContext - Fazendo logout');
     setUser(null);
+    setToken(null);
+    await AsyncStorage.removeItem(TOKEN_KEY);
+    await AsyncStorage.removeItem(USER_KEY);
   };
 
   const updateSelectedAvatar = (avatarId: string) => {
@@ -99,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{
         user,
+        token,
         isAuthenticated: !!user,
         signIn,
         signUp,

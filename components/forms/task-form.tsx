@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
@@ -16,15 +16,25 @@ interface TaskFormProps {
   initialData?: Partial<TaskFormData>;
   onSubmit: (data: TaskFormData) => void;
   onCancel: () => void;
+  resetKey?: number;
 }
 
-export function TaskForm({ initialData, onSubmit, onCancel }: TaskFormProps) {
+export function TaskForm({ initialData, onSubmit, onCancel, resetKey }: TaskFormProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
 
   const [title, setTitle] = useState(initialData?.title || '');
   const [priority, setPriority] = useState<TaskPriority>(initialData?.priority || 'medium');
   const [errors, setErrors] = useState<{ title?: string; general?: string }>({});
+
+  // Reseta o formulário quando resetKey muda
+  useEffect(() => {
+    if (resetKey !== undefined) {
+      setTitle(initialData?.title || '');
+      setPriority(initialData?.priority || 'medium');
+      setErrors({});
+    }
+  }, [resetKey, initialData]);
 
   const validateForm = () => {
     const newErrors: { title?: string } = {};

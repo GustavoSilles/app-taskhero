@@ -8,6 +8,8 @@ import 'react-native-reanimated';
 import { AuthProvider } from '@/contexts/auth-context';
 import { ThemeProvider, useTheme } from '@/contexts/theme-context';
 import { ToastProvider } from '@/contexts/toast-context';
+import { GoalsProvider } from '@/contexts/goals-context';
+import { TasksProvider } from '@/contexts/tasks-context';
 
 function RootLayoutContent() {
   const { colorScheme } = useTheme();
@@ -19,7 +21,6 @@ function RootLayoutContent() {
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="goal/[id]" options={{ headerShown: false }} />
-        <Stack.Screen name="goal/new" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
     </NavigationThemeProvider>
@@ -33,7 +34,11 @@ export default function RootLayout() {
         <ThemeProvider>
           <ToastProvider>
             <AuthProvider>
-              <RootLayoutContent />
+              <GoalsProvider>
+                <TasksProvider>
+                  <RootLayoutContent />
+                </TasksProvider>
+              </GoalsProvider>
             </AuthProvider>
           </ToastProvider>
         </ThemeProvider>

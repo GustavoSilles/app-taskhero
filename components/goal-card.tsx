@@ -79,7 +79,7 @@ export function GoalCard({
             />
           </View>
           <ThemedText style={styles.progressText}>
-            {completedTasks}/{totalTasks} tarefas • {progress}%
+            {completedTasks}/{totalTasks} tarefas • {Math.floor(progress)}%
           </ThemedText>
         </View>
 

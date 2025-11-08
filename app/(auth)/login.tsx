@@ -62,9 +62,9 @@ export default function LoginScreen() {
       console.log('Login bem-sucedido! Redirecionando...');
       // Redireciona para a home após login bem-sucedido
       router.replace('/(tabs)');
-    } catch (error) {
-      console.error('Erro no login:', error);
-      setErrors({ general: 'Falha no login. Verifique suas credenciais.' });
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Falha no login. Verifique suas credenciais.';
+      setErrors({ general: errorMessage });
     }
   };
 
@@ -73,7 +73,9 @@ export default function LoginScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1, backgroundColor: colors.background }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled">
           <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Botão de Tema no canto superior direito */}
             <View style={styles.themeButton}>

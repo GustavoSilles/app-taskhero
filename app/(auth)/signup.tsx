@@ -88,8 +88,9 @@ export default function SignUpScreen() {
       await signUp(name.trim(), email.trim(), password);
       // Redireciona para a home após cadastro bem-sucedido
       router.replace('/(tabs)');
-    } catch {
-      setErrors({ general: 'Falha no cadastro. Tente novamente.' });
+    } catch (error: any) {
+      const errorMessage = error?.message || 'Falha no cadastro. Tente novamente.';
+      setErrors({ general: errorMessage });
     }
   };
 
@@ -98,7 +99,9 @@ export default function SignUpScreen() {
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1, backgroundColor: colors.background }}>
-        <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <ScrollView 
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled">
           <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
             {/* Botão de Tema no canto superior direito */}
             <View style={styles.themeButton}>

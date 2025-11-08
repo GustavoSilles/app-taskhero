@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '../themed-text';
@@ -18,9 +18,10 @@ interface GoalFormProps {
   initialData?: Partial<GoalFormData>;
   onSubmit: (data: GoalFormData) => void;
   onCancel: () => void;
+  resetKey?: number;
 }
 
-export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
+export function GoalForm({ initialData, onSubmit, onCancel, resetKey }: GoalFormProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -38,6 +39,19 @@ export function GoalForm({ initialData, onSubmit, onCancel }: GoalFormProps) {
     endDate?: string;
     general?: string;
   }>({});
+
+  // Reseta o formulário quando resetKey muda
+  useEffect(() => {
+    if (resetKey !== undefined) {
+      setTitle(initialData?.title || '');
+      setDescription(initialData?.description || '');
+      setStartDate(initialData?.startDate || new Date());
+      setEndDate(initialData?.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000));
+      setShowStartDatePicker(false);
+      setShowEndDatePicker(false);
+      setErrors({});
+    }
+  }, [resetKey, initialData]);
 
   const handleStartDateChange = (event: any, selectedDate?: Date) => {
     setShowStartDatePicker(Platform.OS === 'ios');

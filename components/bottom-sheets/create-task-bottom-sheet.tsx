@@ -1,4 +1,4 @@
-import React, { useMemo, forwardRef, useState, useEffect } from 'react';
+import React, { useMemo, forwardRef, useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Keyboard } from 'react-native';
 import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { TaskForm } from '../forms/task-form';
@@ -15,6 +15,7 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
     const { colorScheme } = useTheme();
     const colors = Colors[colorScheme ?? 'light'];
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+    const [resetKey, setResetKey] = useState(0);
     
     const snapPoints = useMemo(() => {
       return isKeyboardVisible ? ['90%'] : ['50%', '65%'];
@@ -43,6 +44,13 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
       />
     );
 
+    const handleChange = useCallback((index: number) => {
+      // Quando o bottom sheet fecha (index < 0), reseta o formulário
+      if (index < 0) {
+        setResetKey(prev => prev + 1);
+      }
+    }, []);
+
     return (
       <BottomSheet
         ref={ref}
@@ -51,6 +59,7 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         onClose={onClose}
+        onChange={handleChange}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
         android_keyboardInputMode="adjustResize"
@@ -58,7 +67,7 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
         backgroundStyle={[styles.background, { backgroundColor: colors.surface }]}
       >
         <BottomSheetView style={styles.container}>
-          <TaskForm onSubmit={onSubmit} onCancel={onClose} />
+          <TaskForm resetKey={resetKey} onSubmit={onSubmit} onCancel={onClose} />
         </BottomSheetView>
       </BottomSheet>
     );
