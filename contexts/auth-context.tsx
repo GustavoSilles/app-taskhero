@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/types';
-import { registerUser, loginUser, decodeToken } from '@/services/api';
+import { registerUser, loginUser, decodeToken, updateProfile } from '@/services/api';
 
 interface AuthContextData {
   user: User | null;
@@ -11,6 +11,12 @@ interface AuthContextData {
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => void;
   updateSelectedAvatar: (avatarId: string) => void;
+  updateUserProfile: (data: {
+    name?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }) => Promise<void>;
   isLoading: boolean;
 }
 
@@ -138,6 +144,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserProfile = async (data: {
+    name?: string;
+    email?: string;
+    currentPassword?: string;
+    newPassword?: string;
+  }) => {
+    if (!token) {
+      throw new Error('Usuário não autenticado');
+    }
+
+    console.log('AuthContext - updateUserProfile iniciado');
+    setIsLoading(true);
+    
+    try {
+      const requestData: any = {};
+      
+      if (data.name) requestData.nome = data.name;
+      if (data.email) requestData.email = data.email;
+      if (data.currentPassword && data.newPassword) {
+        requestData.currentPassword = data.currentPassword;
+        requestData.newPassword = data.newPassword;
+      }
+
+      const response = await updateProfile(token, requestData);
+      
+      // Atualiza os dados do usuário e o token
+      const updatedUser = buildUserFromBackendData(response.data, response.data.token);
+      
+      setToken(response.data.token);
+      setUser(updatedUser);
+
+      // Salva no AsyncStorage
+      await AsyncStorage.setItem(TOKEN_KEY, response.data.token);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+
+      console.log('AuthContext - Perfil atualizado com sucesso:', updatedUser.name);
+    } catch (error) {
+      console.error('AuthContext - Erro ao atualizar perfil:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -148,6 +198,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         updateSelectedAvatar,
+        updateUserProfile,
         isLoading,
       }}>
       {children}

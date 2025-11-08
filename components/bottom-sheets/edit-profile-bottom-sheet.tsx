@@ -16,10 +16,11 @@ interface EditProfileBottomSheetProps {
   onClose: () => void;
   onAvatarEdit?: () => void;
   onChange?: (index: number) => void;
+  isLoading?: boolean;
 }
 
 export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomSheetProps>(
-  ({ initialData, onSubmit, onClose, onAvatarEdit, onChange }, ref) => {
+  ({ initialData, onSubmit, onClose, onAvatarEdit, onChange, isLoading = false }, ref) => {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
@@ -77,6 +78,7 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
             onSubmit={onSubmit}
             onCancel={onClose}
             onAvatarEdit={onAvatarEdit}
+            isLoading={isLoading}
           />
         </BottomSheetScrollView>
       </BottomSheet>

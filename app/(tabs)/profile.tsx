@@ -21,10 +21,11 @@ import { useToast } from '@/contexts/toast-context';
 export default function ProfileScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { signOut, user } = useAuth();
+  const { signOut, user, updateUserProfile } = useAuth();
   const toast = useToast();
   const editProfileBottomSheetRef = useRef<BottomSheet>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
 
   // Calcular estatísticas
   const totalGoals = mockGoals.length;
@@ -34,23 +35,53 @@ export default function ProfileScreen() {
     editProfileBottomSheetRef.current?.snapToIndex(0);
   };
 
-  const handleSaveProfile = (data: any) => {
-    console.log('Salvar perfil:', data);
-    // TODO: Implementar atualização do perfil no backend
+  const handleSaveProfile = async (data: any) => {
+    if (isUpdatingProfile) return;
     
-    // Verifica se está alterando senha
-    const isChangingPassword = data.currentPassword && data.newPassword;
+    setIsUpdatingProfile(true);
     
-    const successMessage = isChangingPassword 
-      ? 'Suas informações e senha foram atualizadas com sucesso!'
-      : 'Suas informações foram atualizadas com sucesso!';
-    
-    editProfileBottomSheetRef.current?.close();
-    
-    // Pequeno delay para fechar o bottom sheet antes de mostrar o toast
-    setTimeout(() => {
-      toast.success('Perfil Atualizado', successMessage);
-    }, 300);
+    try {
+      // Prepara os dados para envio
+      const updateData: any = {};
+      
+      if (data.name !== user?.name) {
+        updateData.name = data.name;
+      }
+      
+      if (data.email !== user?.email) {
+        updateData.email = data.email;
+      }
+      
+      // Verifica se está alterando senha
+      const isChangingPassword = data.currentPassword && data.newPassword;
+      
+      if (isChangingPassword) {
+        updateData.currentPassword = data.currentPassword;
+        updateData.newPassword = data.newPassword;
+      }
+      
+      // Chama a API para atualizar o perfil
+      await updateUserProfile(updateData);
+      
+      const successMessage = isChangingPassword 
+        ? 'Suas informações e senha foram atualizadas com sucesso!'
+        : 'Suas informações foram atualizadas com sucesso!';
+      
+      editProfileBottomSheetRef.current?.close();
+      
+      // Pequeno delay para fechar o bottom sheet antes de mostrar o toast
+      setTimeout(() => {
+        toast.success('Perfil Atualizado', successMessage);
+      }, 300);
+    } catch (error: any) {
+      console.error('Erro ao atualizar perfil:', error);
+      toast.error(
+        'Erro ao Atualizar', 
+        error.message || 'Não foi possível atualizar seu perfil. Tente novamente.'
+      );
+    } finally {
+      setIsUpdatingProfile(false);
+    }
   };
 
   const handleCloseEditProfile = () => {
@@ -221,6 +252,7 @@ export default function ProfileScreen() {
         onSubmit={handleSaveProfile}
         onClose={handleCloseEditProfile}
         onAvatarEdit={handleAvatarEdit}
+        isLoading={isUpdatingProfile}
       />
 
       {/* Modal de Confirmação de Logout */}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, Image } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, Image, ActivityIndicator, Keyboard } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
 import { IconSymbol } from '../ui/icon-symbol';
@@ -22,9 +22,10 @@ interface EditProfileFormProps {
   onSubmit: (data: EditProfileFormData) => void;
   onCancel: () => void;
   onAvatarEdit?: () => void;
+  isLoading?: boolean;
 }
 
-export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit }: EditProfileFormProps) {
+export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit, isLoading = false }: EditProfileFormProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
 
@@ -107,6 +108,9 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
     if (!validateForm()) {
       return;
     }
+
+    // Fecha o teclado
+    Keyboard.dismiss();
 
     const isChangingPassword = currentPassword || newPassword || confirmPassword;
 
@@ -399,16 +403,31 @@ export function EditProfileForm({ initialData, onSubmit, onCancel, onAvatarEdit 
           <View style={styles.actions}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton, { borderColor: colors.border }]}
-              onPress={onCancel}>
+              onPress={onCancel}
+              disabled={isLoading}>
               <ThemedText style={styles.cancelButtonText}>Cancelar</ThemedText>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.button, styles.submitButton, { backgroundColor: colors.primary }]}
-              onPress={handleSubmit}>
-              <ThemedText style={styles.submitButtonText}>
-                Salvar Alterações
-              </ThemedText>
+              style={[
+                styles.button, 
+                styles.submitButton, 
+                { backgroundColor: colors.primary, opacity: isLoading ? 0.7 : 1 }
+              ]}
+              onPress={handleSubmit}
+              disabled={isLoading}>
+              {isLoading ? (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <ActivityIndicator size="small" color="#fff" />
+                  <ThemedText style={styles.submitButtonText}>
+                    Salvando...
+                  </ThemedText>
+                </View>
+              ) : (
+                <ThemedText style={styles.submitButtonText}>
+                  Salvar Alterações
+                </ThemedText>
+              )}
             </TouchableOpacity>
           </View>
         </ThemedView>

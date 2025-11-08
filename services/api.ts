@@ -39,6 +39,23 @@ export interface ErrorResponse {
   message: string;
 }
 
+export interface UpdateProfileRequest {
+  nome?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
+export interface UpdateProfileResponse {
+  data: {
+    token: string;
+    nome: string;
+    email: string;
+    level: number;
+  };
+  message: string;
+}
+
 // ============================================
 // TIPOS - METAS
 // ============================================
@@ -169,6 +186,36 @@ export function decodeToken(token: string): any {
   } catch (error) {
     console.error('Erro ao decodificar token:', error);
     return null;
+  }
+}
+
+/**
+ * Atualiza o perfil do usuário
+ */
+export async function updateProfile(
+  token: string, 
+  data: UpdateProfileRequest
+): Promise<UpdateProfileResponse> {
+  try {
+    const response = await fetch(`${API_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Erro ao atualizar perfil');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Erro ao atualizar perfil:', error);
+    throw error;
   }
 }
 
