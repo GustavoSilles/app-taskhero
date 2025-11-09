@@ -24,6 +24,8 @@ class WebSocketService {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 3000;
   private userId: string | null = null;
+  private isReconnecting = false;
+  private hasConnectedBefore = false;
 
   connect(userId: string) {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
@@ -38,6 +40,8 @@ class WebSocketService {
 
       this.ws.onopen = () => {
         this.reconnectAttempts = 0;
+        this.isReconnecting = false;
+        this.hasConnectedBefore = true;
       };
 
       this.ws.onmessage = (event) => {
@@ -50,7 +54,10 @@ class WebSocketService {
       };
 
       this.ws.onerror = (error) => {
-        console.error('Erro no WebSocket:', error);
+        if (!this.hasConnectedBefore && this.reconnectAttempts === 0) {
+          console.error('Erro ao conectar ao WebSocket:', error);
+        }
+
       };
 
       this.ws.onclose = () => {
@@ -58,7 +65,10 @@ class WebSocketService {
         this.attemptReconnect();
       };
     } catch (error) {
-      console.error('Erro ao criar conexão WebSocket:', error);
+      // Apenas loga se for tentativa inicial
+      if (!this.isReconnecting) {
+        console.error('Erro ao criar conexão WebSocket:', error);
+      }
       this.attemptReconnect();
     }
   }
@@ -69,6 +79,7 @@ class WebSocketService {
     }
 
     this.reconnectAttempts++;
+    this.isReconnecting = true;
 
     setTimeout(() => {
       this.connect(this.userId!);
@@ -82,6 +93,8 @@ class WebSocketService {
     }
     this.userId = null;
     this.reconnectAttempts = 0;
+    this.isReconnecting = false;
+    this.hasConnectedBefore = false;
   }
 
   subscribe(callback: WebSocketCallback) {
