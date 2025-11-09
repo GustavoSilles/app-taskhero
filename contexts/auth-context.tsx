@@ -1,7 +1,9 @@
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { User } from '@/types';
-import { registerUser, loginUser, decodeToken, updateProfile } from '@/services/api';
+import { registerUser, loginUser, decodeToken, updateProfile, listUserRecompensas, updateUserAvatar } from '@/services/api';
+import { websocketService, WebSocketMessage } from '@/services/websocket';
+import { useToast } from './toast-context';
 
 interface AuthContextData {
   user: User | null;
@@ -10,7 +12,7 @@ interface AuthContextData {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => void;
-  updateSelectedAvatar: (avatarId: string) => void;
+  updateSelectedAvatar: (avatarId: string) => Promise<void>;
   updateUserProfile: (data: {
     name?: string;
     email?: string;
@@ -18,31 +20,114 @@ interface AuthContextData {
     newPassword?: string;
   }) => Promise<void>;
   isLoading: boolean;
+  unlockedAvatars: string[]; // IDs dos avatares desbloqueados
+  refreshUnlockedAvatars: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 
 const TOKEN_KEY = '@taskhero:token';
 const USER_KEY = '@taskhero:user';
+const UNLOCKED_AVATARS_KEY = '@taskhero:unlocked_avatars';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [unlockedAvatars, setUnlockedAvatars] = useState<string[]>([]);
+  const toast = useToast();
 
   // Carrega dados salvos ao iniciar
   useEffect(() => {
     loadStoredData();
   }, []);
 
+  // Conecta/desconecta WebSocket baseado no estado de autenticação
+  useEffect(() => {
+    if (user?.id) {
+      websocketService.connect(user.id);
+      const unsubscribe = websocketService.subscribe(handleWebSocketMessage);
+
+      return () => {
+        unsubscribe();
+        websocketService.disconnect();
+      };
+    }
+  }, [user?.id]);
+
+  const handleWebSocketMessage = (data: WebSocketMessage) => {
+    // Se é uma notificação de conquista
+    if (data.message && data.titulo) {
+      toast.success('🎉 Nova Conquista!', data.titulo);
+      return;
+    }
+
+    // Se são dados atualizados do usuário (coins, XP, nível)
+    if (data.level !== undefined || data.xp_points !== undefined || data.task_coins !== undefined) {
+      setUser(prevUser => {
+        if (!prevUser) return null;
+
+        const newLevel = data.level ?? prevUser.level;
+        const totalXP = data.xp_points ?? prevUser.totalPoints;
+        
+        // Calcula XP necessário para o próximo nível (100 * nível)
+        // Nível 1->2: 100, Nível 2->3: 200, Nível 3->4: 300, etc.
+        const xpForNextLevel = 100 * newLevel;
+        
+        // Calcula quanto XP acumulado até o nível atual
+        let xpAccumulatedUntilCurrentLevel = 0;
+        for (let i = 1; i < newLevel; i++) {
+          xpAccumulatedUntilCurrentLevel += 100 * i;
+        }
+        
+        // XP dentro do nível atual (reseta a cada nível)
+        const xpInCurrentLevel = totalXP - xpAccumulatedUntilCurrentLevel;
+
+        const updatedUser: User = {
+          ...prevUser,
+          level: newLevel,
+          currentXP: xpInCurrentLevel, // XP do nível atual (reseta)
+          xpToNextLevel: xpForNextLevel, // XP necessário para próximo nível
+          totalPoints: totalXP, // XP total acumulado
+          taskCoins: data.task_coins ?? prevUser.taskCoins,
+        };
+
+        // Salva no AsyncStorage
+        AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser)).catch(err => 
+          console.error('Erro ao salvar usuário:', err)
+        );
+
+        return updatedUser;
+      });
+    }
+  };
+
   const loadStoredData = async () => {
     try {
       const storedToken = await AsyncStorage.getItem(TOKEN_KEY);
       const storedUser = await AsyncStorage.getItem(USER_KEY);
+      const storedUnlockedAvatars = await AsyncStorage.getItem(UNLOCKED_AVATARS_KEY);
 
       if (storedToken && storedUser) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
+        
+        if (storedUnlockedAvatars) {
+          setUnlockedAvatars(JSON.parse(storedUnlockedAvatars));
+        }
+
+        // Tenta atualizar avatares desbloqueados do backend
+        try {
+          const response = await listUserRecompensas(storedToken);
+          const avatarIds = response.data
+            .filter((r: any) => r.tipo === 'AVATAR')
+            .map((r: any) => r.image_id);
+          
+          setUnlockedAvatars(avatarIds);
+          await AsyncStorage.setItem(UNLOCKED_AVATARS_KEY, JSON.stringify(avatarIds));
+        } catch (error) {
+          console.error('Erro ao carregar avatares do backend:', error);
+        }
       }
     } catch (error) {
       console.error('Erro ao carregar dados salvos:', error);
@@ -51,14 +136,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const refreshUnlockedAvatars = async () => {
+    if (!token) return;
+    
+    try {
+      const response = await listUserRecompensas(token);
+      const avatarIds = response.data
+        .filter((r: any) => r.tipo === 'AVATAR')
+        .map((r: any) => r.image_id);
+      
+      setUnlockedAvatars(avatarIds);
+      await AsyncStorage.setItem(UNLOCKED_AVATARS_KEY, JSON.stringify(avatarIds));
+    } catch (error) {
+      console.error('Erro ao atualizar avatares:', error);
+      throw error;
+    }
+  };
+
   const buildUserFromBackendData = (backendData: any, userToken: string): User => {
     const tokenData = decodeToken(userToken);
     
-    // Calcula XP para o próximo nível (assumindo 100 XP por nível)
-    const xpPerLevel = 100;
     const currentLevel = tokenData.level || 1;
-    const currentXP = tokenData.xp_points || 0;
-    const xpToNextLevel = (currentLevel * xpPerLevel) - currentXP;
+    const totalXP = tokenData.xp_points || 0;
+    
+    // Calcula XP necessário para o próximo nível (100 * nível)
+    // Nível 1->2: 100, Nível 2->3: 200, Nível 3->4: 300, etc.
+    const xpForNextLevel = 100 * currentLevel;
+    
+    // Calcula quanto XP acumulado até o nível atual
+    let xpAccumulatedUntilCurrentLevel = 0;
+    for (let i = 1; i < currentLevel; i++) {
+      xpAccumulatedUntilCurrentLevel += 100 * i;
+    }
+    
+    // XP dentro do nível atual (reseta a cada nível)
+    const xpInCurrentLevel = totalXP - xpAccumulatedUntilCurrentLevel;
 
     return {
       id: tokenData.id.toString(),
@@ -66,14 +178,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: backendData.email,
       createdAt: new Date(),
       level: currentLevel,
-      currentXP: currentXP,
-      xpToNextLevel: Math.max(0, xpToNextLevel),
-      totalPoints: currentXP,
+      currentXP: xpInCurrentLevel, // XP do nível atual (reseta)
+      xpToNextLevel: xpForNextLevel, // XP necessário para próximo nível
+      totalPoints: totalXP, // XP total acumulado
       taskCoins: tokenData.task_coins || 0,
       goalsCompletedOnTime: 0,
       goalsCompletedLate: 0,
       goalsExpired: 0,
-      selectedAvatarId: '1',
+      selectedAvatarId: tokenData.selected_avatar_id || null,
     };
   };
 
@@ -90,6 +202,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Salva no AsyncStorage
       await AsyncStorage.setItem(TOKEN_KEY, response.data.token);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
+
+      // Carrega avatares desbloqueados
+      try {
+        const recompensasResponse = await listUserRecompensas(response.data.token);
+        const avatarIds = recompensasResponse.data
+          .filter((r: any) => r.tipo === 'AVATAR')
+          .map((r: any) => r.image_id);
+        
+        setUnlockedAvatars(avatarIds);
+        await AsyncStorage.setItem(UNLOCKED_AVATARS_KEY, JSON.stringify(avatarIds));
+      } catch (error) {
+        console.error('Erro ao carregar avatares:', error);
+        // Não impede o login se falhar
+      }
 
       console.log('AuthContext - Login bem-sucedido:', userData.name);
     } catch (error) {
@@ -116,6 +242,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await AsyncStorage.setItem(TOKEN_KEY, loginResponse.data.token);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
 
+      // Carrega avatares desbloqueados do backend
+      try {
+        const recompensasResponse = await listUserRecompensas(loginResponse.data.token);
+        const avatarIds = recompensasResponse.data
+          .filter((r: any) => r.tipo === 'AVATAR')
+          .map((r: any) => r.image_id);
+        
+        setUnlockedAvatars(avatarIds);
+        await AsyncStorage.setItem(UNLOCKED_AVATARS_KEY, JSON.stringify(avatarIds));
+      } catch (error) {
+        console.error('Erro ao carregar avatares:', error);
+        // Não impede o cadastro se falhar
+      }
+
       console.log('AuthContext - Cadastro bem-sucedido:', userData.name);
     } catch (error) {
       throw error;
@@ -126,21 +266,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     console.log('AuthContext - Fazendo logout');
+    websocketService.disconnect();
     setUser(null);
     setToken(null);
+    setUnlockedAvatars([]);
     await AsyncStorage.removeItem(TOKEN_KEY);
     await AsyncStorage.removeItem(USER_KEY);
+    await AsyncStorage.removeItem(UNLOCKED_AVATARS_KEY);
   };
 
-  const updateSelectedAvatar = (avatarId: string) => {
-    if (user) {
-      // Atualiza localmente (apenas mock, sem backend)
-      const updatedUser = {
-        ...user,
-        selectedAvatarId: avatarId,
-      };
+  const updateSelectedAvatar = async (avatarId: string) => {
+    if (!user || !token) return;
+
+    try {
+      // Chama a API para atualizar o avatar no backend
+      const response = await updateUserAvatar(token, avatarId);
+      
+      // Atualiza o token com os novos dados
+      const newToken = response.data.token;
+      const updatedUser = buildUserFromBackendData(decodeToken(newToken), newToken);
+      
+      setToken(newToken);
       setUser(updatedUser);
-      console.log('AuthContext - Avatar atualizado (mock):', avatarId);
+
+      // Persiste no AsyncStorage
+      await AsyncStorage.setItem(TOKEN_KEY, newToken);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+
+      console.log('AuthContext - Avatar atualizado e persistido:', avatarId);
+    } catch (error) {
+      console.error('AuthContext - Erro ao atualizar avatar:', error);
+      throw error;
     }
   };
 
@@ -200,6 +356,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateSelectedAvatar,
         updateUserProfile,
         isLoading,
+        unlockedAvatars,
+        refreshUnlockedAvatars,
       }}>
       {children}
     </AuthContext.Provider>

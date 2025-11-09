@@ -1,4 +1,4 @@
-// Funções utilitárias para cálculo de status e pontos de metas
+// Funções utilitárias para cálculo de status, coins e XP de metas e tarefas
 // Baseado nas Regras de Negócio (RN01-RN08)
 
 import { GoalStatus } from '@/types';
@@ -16,11 +16,11 @@ export function calculateGoalStatus(
   
   // Se a meta foi marcada como concluída
   if (completedAt) {
-    // RN07: Meta concluída dentro do prazo = 100 pontos e conta para nível
+    // RN07: Meta concluída dentro do prazo = 100 coins e 100 XP
     if (completedAt <= endDate) {
       return 'completed';
     }
-    // RN08: Meta concluída com atraso = 50 pontos, não conta para nível
+    // RN08: Meta concluída com atraso = 50 coins e 0 XP
     return 'completed_late';
   }
   
@@ -60,23 +60,25 @@ export function canAddTasks(status: GoalStatus): boolean {
 }
 
 /**
- * RN07-RN08: Calcula pontos ganhos ao completar uma meta
+ * RN07-RN08: Calcula coins ganhos ao completar uma meta
  */
 export function calculateGoalPoints(status: GoalStatus): number {
   switch (status) {
     case 'completed':
-      return 100; // RN07: Meta no prazo
+      return 100; // RN07: Meta no prazo = 100 coins e 100 XP
     case 'completed_late':
-      return 50; // RN08: Meta com atraso
+      return 50; // RN08: Meta com atraso = 50 coins e 0 XP
     default:
       return 0;
   }
 }
 
 /**
- * RN06: Cada tarefa concluída vale 10 pontos
+ * RN06: Cada tarefa concluída vale 10 coins e 10 XP
+ * Desmarcar uma tarefa remove 10 coins e 10 XP
  */
 export const TASK_POINTS = 10;
+export const TASK_XP = 10;
 
 /**
  * RN02-RN04: Verifica se uma meta conta para progressão de nível

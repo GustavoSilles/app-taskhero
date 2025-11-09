@@ -20,6 +20,8 @@ export function LevelCoinsHeader({
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
 
+  // currentXP é o XP dentro do nível atual (reseta a cada nível)
+  // xpToNextLevel é quanto precisa para o próximo nível (100, 200, 300, 400...)
   const progressPercentage = (currentXP / xpToNextLevel) * 100;
 
   return (

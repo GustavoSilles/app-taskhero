@@ -26,6 +26,7 @@ interface BuyAvatarModalProps {
   userCoins: number;
   onConfirm: () => void;
   onCancel: () => void;
+  isLoading?: boolean;
 }
 
 export function BuyAvatarModal({
@@ -34,6 +35,7 @@ export function BuyAvatarModal({
   userCoins,
   onConfirm,
   onCancel,
+  isLoading = false,
 }: BuyAvatarModalProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -136,20 +138,20 @@ export function BuyAvatarModal({
                     styles.confirmButton,
                     { 
                       backgroundColor: hasEnoughCoins ? colors.primary : colors.disabled,
-                      opacity: hasEnoughCoins ? 1 : 0.5,
+                      opacity: (hasEnoughCoins && !isLoading) ? 1 : 0.5,
                     }
                   ]}
-                  onPress={hasEnoughCoins ? onConfirm : undefined}
-                  activeOpacity={hasEnoughCoins ? 0.7 : 1}
-                  disabled={!hasEnoughCoins}
+                  onPress={(hasEnoughCoins && !isLoading) ? onConfirm : undefined}
+                  activeOpacity={(hasEnoughCoins && !isLoading) ? 0.7 : 1}
+                  disabled={!hasEnoughCoins || isLoading}
                 >
                   <IconSymbol 
-                    name={hasEnoughCoins ? "cart.fill" : "lock.fill"} 
+                    name={isLoading ? "hourglass" : hasEnoughCoins ? "cart.fill" : "lock.fill"} 
                     size={18} 
                     color="#fff" 
                   />
                   <ThemedText style={styles.confirmButtonText}>
-                    {hasEnoughCoins ? 'Comprar' : 'Sem Saldo'}
+                    {isLoading ? 'Comprando...' : hasEnoughCoins ? 'Comprar' : 'Sem Saldo'}
                   </ThemedText>
                 </TouchableOpacity>
               </View>

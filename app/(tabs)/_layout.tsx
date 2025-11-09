@@ -8,22 +8,23 @@ import { LevelCoinsHeader } from '@/components/level-coins-header';
 import { Logo } from '@/components/logo';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
-import { mockUser } from '@/mocks/user';
 import { useAuth } from '@/contexts/auth-context';
 import { getAvatarImage } from '@/constants/avatars';
+import { useGamification } from '@/hooks/use-gamification';
 
 export default function TabLayout() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
+  const gamification = useGamification();
 
   const handleAvatarPress = () => {
     router.push('/(tabs)/profile');
   };
 
   // Obtém a imagem do avatar de herói selecionado
-  const selectedAvatarId = user?.selectedAvatarId || mockUser.selectedAvatarId;
+  const selectedAvatarId = user?.selectedAvatarId;
   const heroAvatarImage = selectedAvatarId ? getAvatarImage(selectedAvatarId) : null;
 
   return (
@@ -58,10 +59,10 @@ export default function TabLayout() {
         ),
         headerTitle: () => (
           <LevelCoinsHeader
-            level={mockUser.level}
-            currentXP={mockUser.currentXP}
-            xpToNextLevel={mockUser.xpToNextLevel}
-            taskCoins={mockUser.taskCoins}
+            level={gamification.level}
+            currentXP={gamification.currentXP}
+            xpToNextLevel={gamification.xpToNextLevel}
+            taskCoins={gamification.taskCoins}
           />
         ),
         headerRight: () => (
@@ -73,11 +74,6 @@ export default function TabLayout() {
             {heroAvatarImage ? (
               <Image
                 source={heroAvatarImage}
-                style={styles.avatar}
-              />
-            ) : (user?.avatarUrl || mockUser.avatarUrl) ? (
-              <Image
-                source={{ uri: user?.avatarUrl || mockUser.avatarUrl }}
                 style={styles.avatar}
               />
             ) : (

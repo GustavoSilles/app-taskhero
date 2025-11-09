@@ -94,7 +94,7 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
         };
       case 'info':
         return {
-          backgroundColor: colors.primary,
+          backgroundColor: colors.secondary,
           icon: 'info.circle.fill' as SFSymbols6_0,
         };
     }

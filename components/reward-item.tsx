@@ -73,7 +73,7 @@ export function RewardItem({
         <View style={styles.footer}>
           <View style={styles.priceContainer}>
             <IconSymbol name="star.fill" size={16} color={colors.warning} />
-            <ThemedText style={styles.price}>{cost} pontos</ThemedText>
+            <ThemedText style={styles.price}>{cost} coins</ThemedText>
           </View>
 
           {isPurchased ? (
@@ -91,7 +91,7 @@ export function RewardItem({
               onPress={handlePurchase}
               disabled={!canAfford}>
               <ThemedText style={styles.buyButtonText}>
-                {canAfford ? 'Comprar' : 'Sem pontos'}
+                {canAfford ? 'Comprar' : 'Sem coins'}
               </ThemedText>
             </TouchableOpacity>
           )}

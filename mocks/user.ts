@@ -7,7 +7,7 @@ export const mockUser: User = {
   name: 'Gustavo',
   email: 'gustavo@exemplo.com',
   avatarUrl: undefined,
-  selectedAvatarId: '1', // Avatar inicial: Homem-Aranha
+  selectedAvatarId: undefined, // Sem avatar selecionado por padrão
   createdAt: new Date(2025, 0, 1), // 1 de janeiro de 2025
   level: 10,
   currentXP: 180,
@@ -19,7 +19,7 @@ export const mockUser: User = {
   goalsExpired: 1,
 };
 
-// Função para atualizar pontos do usuário
+// Função para atualizar coins do usuário
 export function updateUserPoints(
   user: User,
   pointsToAdd: number

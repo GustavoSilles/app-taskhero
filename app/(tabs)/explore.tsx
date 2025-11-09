@@ -11,8 +11,8 @@ import { useToast } from '@/contexts/toast-context';
 import { useState, useRef, useEffect } from 'react';
 import { AVATARS } from '@/constants/avatars';
 import { BuyAvatarModal } from '@/components/buy-avatar-modal';
-import { mockUser } from '@/mocks/user';
 import { getAllBadges } from '@/mocks/badges';
+import { buyAvatar, updateUserAvatar } from '@/services/api';
 
 export default function RewardsScreen() {
   const params = useLocalSearchParams();
@@ -21,23 +21,26 @@ export default function RewardsScreen() {
   
   // Na tela de recompensas, mostramos TODOS os emblemas disponíveis
   const [badges] = useState(getAllBadges());
-  const [avatars, setAvatars] = useState(AVATARS);
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { user, updateSelectedAvatar } = useAuth();
+  const { user, updateSelectedAvatar, token, unlockedAvatars, refreshUnlockedAvatars } = useAuth();
   const toast = useToast();
   
   // Usa o avatar do usuário ou o padrão
-  const [selectedAvatar, setSelectedAvatar] = useState(user?.selectedAvatarId || '1');
+  const [selectedAvatar, setSelectedAvatar] = useState(user?.selectedAvatarId || null);
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [selectedAvatarToBuy, setSelectedAvatarToBuy] = useState<typeof AVATARS[0] | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   
-  // TaskCoins do usuário (depois vem do backend)
-  const [userCoins, setUserCoins] = useState(mockUser.taskCoins);
+  // Prepara os avatares com status de desbloqueio do backend
+  const avatars = AVATARS.map(avatar => ({
+    ...avatar,
+    unlocked: unlockedAvatars.includes(avatar.id)
+  }));
 
   const unlockedBadges = badges.filter((b) => b.unlocked).length;
   const totalBadges = badges.length;
-  const unlockedAvatars = avatars.filter((a) => a.unlocked).length;
+  const unlockedAvatarsCount = avatars.filter((a) => a.unlocked).length;
   const totalAvatars = avatars.length;
 
   // Scroll para a seção de avatares quando o parâmetro scrollToAvatars é true
@@ -64,15 +67,33 @@ export default function RewardsScreen() {
   }, [user?.selectedAvatarId]);
 
   // Função para selecionar ou comprar avatar
-  const handleSelectAvatar = (avatarId: string) => {
+  const handleSelectAvatar = async (avatarId: string) => {
     const avatar = avatars.find(a => a.id === avatarId);
     
     if (!avatar) return;
     
     // Se o avatar está desbloqueado, seleciona
     if (avatar.unlocked) {
-      setSelectedAvatar(avatarId);
-      updateSelectedAvatar(avatarId);
+      if (!token) {
+        toast.error('Erro', 'Sessão expirada. Faça login novamente.');
+        return;
+      }
+
+      try {
+        // Salva no backend
+        await updateUserAvatar(token, avatarId);
+        
+        // Atualiza o contexto (que agora também persiste)
+        await updateSelectedAvatar(avatarId);
+        
+        // Atualiza o estado local
+        setSelectedAvatar(avatarId);
+        
+        toast.success('Avatar Selecionado', `${avatar.name} está agora ativo!`);
+      } catch (error: any) {
+        console.error('Erro ao selecionar avatar:', error);
+        toast.error('Erro', error.message || 'Não foi possível selecionar o avatar');
+      }
     } else {
       // Se está bloqueado, abre modal de compra
       setSelectedAvatarToBuy(avatar);
@@ -81,45 +102,51 @@ export default function RewardsScreen() {
   };
 
   // Função para confirmar compra
-  const handleConfirmPurchase = () => {
-    if (!selectedAvatarToBuy) return;
+  const handleConfirmPurchase = async () => {
+    if (!selectedAvatarToBuy || !token) return;
     
     // Verifica se tem saldo suficiente
+    const userCoins = user?.taskCoins || 0;
     if (userCoins < selectedAvatarToBuy.cost) {
       setShowBuyModal(false);
       toast.error('Saldo Insuficiente', `Você precisa de mais ${selectedAvatarToBuy.cost - userCoins} TaskCoins`);
       return;
     }
 
-    // Deduz as moedas
-    setUserCoins(prev => prev - selectedAvatarToBuy.cost);
+    setIsLoading(true);
+    try {
+      // Chama a API para comprar o avatar
+      await buyAvatar(token, selectedAvatarToBuy.id);
 
-    // Desbloqueia o avatar
-    setAvatars(prev => 
-      prev.map(avatar => 
-        avatar.id === selectedAvatarToBuy.id 
-          ? { ...avatar, unlocked: true }
-          : avatar
-      )
-    );
+      // Atualiza a lista de avatares desbloqueados
+      await refreshUnlockedAvatars();
 
-    // Seleciona automaticamente o avatar comprado
-    setSelectedAvatar(selectedAvatarToBuy.id);
-    updateSelectedAvatar(selectedAvatarToBuy.id);
+      // Seleciona automaticamente o avatar comprado salvando no backend
+      await updateUserAvatar(token, selectedAvatarToBuy.id);
+      await updateSelectedAvatar(selectedAvatarToBuy.id);
+      setSelectedAvatar(selectedAvatarToBuy.id);
 
-    // Fecha o modal
-    setShowBuyModal(false);
+      // Fecha o modal
+      setShowBuyModal(false);
 
-    // Mostra toast de sucesso
-    setTimeout(() => {
-      toast.success(
-        'Avatar Desbloqueado! 🎉',
-        `${selectedAvatarToBuy.name} foi adicionado à sua coleção!`
+      // Mostra toast de sucesso
+      setTimeout(() => {
+        toast.success(
+          'Avatar Desbloqueado! 🎉',
+          `${selectedAvatarToBuy.name} foi adicionado à sua coleção!`
+        );
+      }, 300);
+
+    } catch (error: any) {
+      console.error('Erro ao comprar avatar:', error);
+      toast.error(
+        'Erro ao comprar',
+        error.message || 'Não foi possível comprar o avatar. Tente novamente.'
       );
-    }, 300);
-
-    // Limpa o avatar selecionado
-    setSelectedAvatarToBuy(null);
+    } finally {
+      setIsLoading(false);
+      setSelectedAvatarToBuy(null);
+    }
   };
 
   // Função para cancelar compra
@@ -168,7 +195,7 @@ export default function RewardsScreen() {
             <ThemedText type="subtitle" style={styles.sectionTitleText}>Avatares</ThemedText>
           </View>
           <ThemedText style={styles.progressText}>
-            {unlockedAvatars}/{totalAvatars}
+            {unlockedAvatarsCount}/{totalAvatars}
           </ThemedText>
         </View>
         <ThemedText style={styles.sectionDescription}>
@@ -247,7 +274,7 @@ export default function RewardsScreen() {
             <ThemedText style={styles.infoTitle}>Avatares</ThemedText>
           </View>
           <ThemedText style={styles.infoDescription}>
-            Compre avatares usando TaskCoins que você ganha completando metas (+50 coins) e tarefas (+10 coins)
+            Compre avatares usando TaskCoins que você ganha completando metas e tarefas
           </ThemedText>
         </ThemedView>
 
@@ -276,9 +303,10 @@ export default function RewardsScreen() {
       <BuyAvatarModal
         visible={showBuyModal}
         avatar={selectedAvatarToBuy}
-        userCoins={userCoins}
+        userCoins={user?.taskCoins || 0}
         onConfirm={handleConfirmPurchase}
         onCancel={handleCancelPurchase}
+        isLoading={isLoading}
       />
     </ScrollView>
   );

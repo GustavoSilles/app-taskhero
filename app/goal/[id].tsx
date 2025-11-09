@@ -107,7 +107,7 @@ export default function GoalDetailScreen() {
 
       handleCloseTaskBottomSheet();
       setTimeout(() => {
-        toast.success('Sucesso', 'Tarefa criada com sucesso! (+10 pontos)');
+        toast.success('Sucesso', 'Tarefa criada com sucesso!');
       }, 300);
     } catch (error: any) {
       console.error('Erro ao criar tarefa:', error);
@@ -194,11 +194,12 @@ export default function GoalDetailScreen() {
       const updatedGoal = await concludeGoal(goal.id);
       setGoal(updatedGoal); // Atualiza o estado local
       
-      // Calcula pontos baseado no status real da meta concluída
-      const points = calculateGoalPoints(updatedGoal.status);
+      // Calcula coins e XP baseado no status real da meta concluída
+      const coins = calculateGoalPoints(updatedGoal.status);
+      const xp = updatedGoal.status === 'completed_late' ? 0 : 100;
       const message = updatedGoal.status === 'completed_late' 
-        ? `Meta concluída com atraso! Você ganhou ${points} pontos.`
-        : `Meta concluída! Você ganhou ${points} pontos! 🎉`;
+        ? `Meta concluída com atraso! Você ganhou ${coins} coins (sem XP).`
+        : `Meta concluída! Você ganhou ${coins} coins e ${xp} XP! 🎉`;
       
       toast.success('Parabéns!', message);
     } catch (error: any) {
@@ -215,8 +216,8 @@ export default function GoalDetailScreen() {
       const task = tasks.find(t => t.id === taskId);
       if (!task) return;
 
-      // Se já está concluída, volta para pendente
-      // Se está pendente, marca como concluída
+      // Se já está concluída, volta para pendente (sem ganhar coins)
+      // Se está pendente, marca como concluída (ganha 10 coins e 10 XP no backend)
       if (task.completed) {
         // Mapeia prioridade para o formato do backend
         let prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' = 'MEDIA';
@@ -231,20 +232,28 @@ export default function GoalDetailScreen() {
             prioridade = 'MEDIA';
         }
         
+        // Volta para pendente (não ganha coins)
         await updateTask(goal.id, taskId, { 
           titulo: task.title, 
           prioridade,
           status: 'PENDENTE'
         });
+        
+        // Recarrega a meta
+        const updatedGoal = await getGoalById(goal.id, true);
+        setGoal(updatedGoal);
+        
+        toast.info('Tarefa desmarcada! -10 coins e -10 XP');
       } else {
+        // Conclui a tarefa (ganha 10 coins e 10 XP no backend)
         await concludeTask(goal.id, taskId);
+        
+        // Recarrega a meta
+        const updatedGoal = await getGoalById(goal.id, true);
+        setGoal(updatedGoal);
+        
+        toast.success('Parabéns!', 'Tarefa concluída! +10 coins e +10 XP 🎉');
       }
-      
-      // Recarrega a meta específica para atualizar o progresso (forçando refresh do backend)
-      const updatedGoal = await getGoalById(goal.id, true);
-      setGoal(updatedGoal);
-      
-      toast.success('Sucesso', 'Tarefa atualizada!');
     } catch (error: any) {
       console.error('Erro ao alternar tarefa:', error);
       toast.error('Erro', error.message || 'Não foi possível atualizar a tarefa');

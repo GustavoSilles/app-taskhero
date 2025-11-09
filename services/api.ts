@@ -56,6 +56,16 @@ export interface UpdateProfileResponse {
   message: string;
 }
 
+export interface UserStatsResponse {
+  data: {
+    total: number;
+    completed: number;
+    completedLate: number;
+    expired: number;
+    inProgress: number;
+  };
+}
+
 // ============================================
 // TIPOS - METAS
 // ============================================
@@ -215,6 +225,32 @@ export async function updateProfile(
     return responseData;
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
+    throw error;
+  }
+}
+
+/**
+ * Busca as estatísticas do usuário
+ */
+export async function getUserStats(token: string): Promise<UserStatsResponse> {
+  try {
+    const response = await fetch(`${API_URL}/auth/stats`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Erro ao buscar estatísticas');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Erro ao buscar estatísticas:', error);
     throw error;
   }
 }
@@ -582,7 +618,7 @@ export async function deleteTask(
  */
 export async function updateUserAvatar(token: string, avatarId: string): Promise<any> {
   try {
-    const response = await fetch(`${API_URL}/auth/avatar`, {
+    const response = await fetch(`${API_URL}/auth/avatar/select`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -599,6 +635,83 @@ export async function updateUserAvatar(token: string, avatarId: string): Promise
     return await response.json();
   } catch (error) {
     console.error('Erro ao atualizar avatar:', error);
+    throw error;
+  }
+}
+
+// ============================================
+// FUNÇÕES - RECOMPENSAS
+// ============================================
+
+export interface RecompensaResponse {
+  id: number;
+  image_id: string;
+  tipo: string;
+  name: string;
+  preco: number;
+  minimum_level?: number;
+}
+
+export interface BuyAvatarResponse {
+  data: RecompensaResponse[];
+  message: string;
+}
+
+export interface ListRecompensasResponse {
+  data: RecompensaResponse[];
+}
+
+/**
+ * Compra um avatar
+ */
+export async function buyAvatar(
+  token: string, 
+  avatarId: string
+): Promise<BuyAvatarResponse> {
+  try {
+    const response = await fetch(`${API_URL}/recompensa/buy/${avatarId}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Erro ao comprar avatar');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Erro ao comprar avatar:', error);
+    throw error;
+  }
+}
+
+/**
+ * Lista todas as recompensas (avatares e emblemas) do usuário
+ */
+export async function listUserRecompensas(token: string): Promise<ListRecompensasResponse> {
+  try {
+    const response = await fetch(`${API_URL}/recompensa/list`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Erro ao listar recompensas');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Erro ao listar recompensas:', error);
     throw error;
   }
 }

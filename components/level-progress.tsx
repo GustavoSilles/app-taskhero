@@ -7,16 +7,16 @@ import { useTheme } from '@/contexts/theme-context';
 import { getLevelInfo, getLevelName, getMotivationalMessage } from '@/utils/level-calculation';
 
 interface LevelProgressProps {
-  goalsCompletedOnTime: number;
+  xpPoints: number;
 }
 
 export function LevelProgress({
-  goalsCompletedOnTime,
+  xpPoints,
 }: LevelProgressProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
 
-  const levelInfo = getLevelInfo(goalsCompletedOnTime);
+  const levelInfo = getLevelInfo(xpPoints);
   const levelName = getLevelName(levelInfo.level);
   const motivationalText = getMotivationalMessage(levelInfo.progress);
 
@@ -32,7 +32,7 @@ export function LevelProgress({
               Nível {levelInfo.level} - {levelName}
             </ThemedText>
             <ThemedText style={styles.levelSubtext}>
-              {levelInfo.currentGoals} metas concluídas no prazo
+              {levelInfo.xpInCurrentLevel}/{levelInfo.xpForNext} XP
             </ThemedText>
           </View>
         </View>

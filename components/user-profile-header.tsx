@@ -83,7 +83,7 @@ export function UserProfileHeader({
           <ThemedText type="defaultSemiBold" style={styles.statValue}>
             {totalPoints}
           </ThemedText>
-          <ThemedText style={styles.statLabel}>Pontos</ThemedText>
+          <ThemedText style={styles.statLabel}>XP</ThemedText>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -95,7 +95,7 @@ export function UserProfileHeader({
               {taskCoins}
             </ThemedText>
           </View>
-          <ThemedText style={styles.statLabel}>TaskCoins</ThemedText>
+          <ThemedText style={styles.statLabel}>Coins</ThemedText>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />

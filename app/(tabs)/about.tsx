@@ -23,7 +23,7 @@ export default function AboutScreen() {
     {
       icon: 'star.fill',
       title: 'Sistema de Gamificação',
-      description: 'Ganhe pontos, suba de nível e conquiste emblemas',
+      description: 'Ganhe coins, suba de nível e conquiste emblemas',
     },
     {
       icon: 'bell.fill',
@@ -99,7 +99,7 @@ export default function AboutScreen() {
           <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
             <ThemedText style={styles.stepNumberText}>3</ThemedText>
           </View>
-          <ThemedText style={styles.stepText}>Complete tarefas e ganhe pontos</ThemedText>
+          <ThemedText style={styles.stepText}>Complete tarefas e ganhe coins</ThemedText>
         </View>
         <View style={styles.stepItem}>
           <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
@@ -113,7 +113,7 @@ export default function AboutScreen() {
           <View style={[styles.stepNumber, { backgroundColor: colors.primary }]}>
             <ThemedText style={styles.stepNumberText}>5</ThemedText>
           </View>
-          <ThemedText style={styles.stepText}>Use pontos para desbloquear recompensas</ThemedText>
+          <ThemedText style={styles.stepText}>Use coins para desbloquear recompensas</ThemedText>
         </View>
       </View>
 
@@ -124,15 +124,15 @@ export default function AboutScreen() {
         </ThemedText>
         <View style={styles.pointItem}>
           <IconSymbol name="checkmark.circle.fill" size={20} color={colors.success} />
-          <ThemedText style={styles.pointText}>Tarefa concluída: +10 pontos</ThemedText>
+          <ThemedText style={styles.pointText}>Tarefa concluída: +10 coins e +10 XP</ThemedText>
         </View>
         <View style={styles.pointItem}>
           <IconSymbol name="flag.checkered" size={20} color={colors.success} />
-          <ThemedText style={styles.pointText}>Meta concluída no prazo: +100 pontos</ThemedText>
+          <ThemedText style={styles.pointText}>Meta concluída no prazo: +100 coins e +100 XP</ThemedText>
         </View>
         <View style={styles.pointItem}>
           <IconSymbol name="clock.badge.checkmark" size={20} color={colors.warning} />
-          <ThemedText style={styles.pointText}>Meta concluída com atraso: +50 pontos</ThemedText>
+          <ThemedText style={styles.pointText}>Meta concluída com atraso: +50 coins (sem XP)</ThemedText>
         </View>
       </View>
 

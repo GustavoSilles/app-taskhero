@@ -1,6 +1,6 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { UserProfileHeader } from '@/components/user-profile-header';
@@ -9,27 +9,54 @@ import { StatsCard } from '@/components/stats-card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
-import { mockUser } from '@/mocks/user';
-import { mockGoals } from '@/mocks/goals';
 import { getUnlockedBadges } from '@/mocks/badges';
 import { useAuth } from '@/contexts/auth-context';
 import { EditProfileBottomSheet } from '@/components/bottom-sheets/edit-profile-bottom-sheet';
 import { ThemeSelector } from '@/components/theme-selector';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useToast } from '@/contexts/toast-context';
+import { getUserStats } from '@/services/api';
 
 export default function ProfileScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const { signOut, user, updateUserProfile } = useAuth();
+  const { signOut, user, updateUserProfile, token } = useAuth();
   const toast = useToast();
   const editProfileBottomSheetRef = useRef<BottomSheet>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [stats, setStats] = useState({
+    total: 0,
+    completed: 0,
+    completedLate: 0,
+    expired: 0,
+    inProgress: 0
+  });
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+
+  // Carrega as estatísticas ao montar o componente
+  useEffect(() => {
+    const loadStats = async () => {
+      if (!token) return;
+      
+      try {
+        setIsLoadingStats(true);
+        const response = await getUserStats(token);
+        setStats(response.data);
+      } catch (error) {
+        console.error('Erro ao carregar estatísticas:', error);
+        toast.error('Erro', 'Não foi possível carregar as estatísticas');
+      } finally {
+        setIsLoadingStats(false);
+      }
+    };
+
+    loadStats();
+  }, [token, toast]);
 
   // Calcular estatísticas
-  const totalGoals = mockGoals.length;
-  const completedGoals = mockUser.goalsCompletedOnTime + mockUser.goalsCompletedLate;
+  const totalGoals = stats.total;
+  const completedGoals = stats.completed + stats.completedLate;
 
   const handleEditProfile = () => {
     editProfileBottomSheetRef.current?.snapToIndex(0);
@@ -114,13 +141,13 @@ export default function ProfileScreen() {
         {/* Cabeçalho do Perfil */}
         <View style={styles.section}>
           <UserProfileHeader
-            name={user?.name || mockUser.name}
-            email={user?.email || mockUser.email}
-            avatarUrl={user?.avatarUrl || mockUser.avatarUrl}
-            selectedAvatarId={user?.selectedAvatarId || mockUser.selectedAvatarId}
-            level={user?.level || mockUser.level}
-            totalPoints={user?.totalPoints || mockUser.totalPoints}
-            taskCoins={mockUser.taskCoins}
+            name={user?.name || ''}
+            email={user?.email || ''}
+            avatarUrl={user?.avatarUrl}
+            selectedAvatarId={user?.selectedAvatarId || undefined}
+            level={user?.level || 1}
+            totalPoints={user?.totalPoints || 0}
+            taskCoins={user?.taskCoins || 0}
             goalsCompleted={completedGoals}
             onEditPress={handleEditProfile}
           />
@@ -136,13 +163,13 @@ export default function ProfileScreen() {
           <StatsCard
             icon="target"
             label="Total de Metas"
-            value={totalGoals}
+            value={isLoadingStats ? '...' : totalGoals}
             color={colors.primary}
           />
           <StatsCard
             icon="checkmark.circle.fill"
             label="No Prazo"
-            value={mockUser.goalsCompletedOnTime}
+            value={isLoadingStats ? '...' : stats.completed}
             color={colors.success}
           />
         </View>
@@ -151,13 +178,13 @@ export default function ProfileScreen() {
           <StatsCard
             icon="clock"
             label="Com Atraso"
-            value={mockUser.goalsCompletedLate}
+            value={isLoadingStats ? '...' : stats.completedLate}
             color={colors.warning}
           />
           <StatsCard
             icon="xmark.circle.fill"
             label="Expiradas"
-            value={mockUser.goalsExpired}
+            value={isLoadingStats ? '...' : stats.expired}
             color={colors.error}
           />
         </View>
@@ -244,10 +271,10 @@ export default function ProfileScreen() {
       <EditProfileBottomSheet
         ref={editProfileBottomSheetRef}
         initialData={{
-          name: user?.name || mockUser.name,
-          email: user?.email || mockUser.email,
-          avatarUrl: user?.avatarUrl || mockUser.avatarUrl,
-          selectedAvatarId: user?.selectedAvatarId || mockUser.selectedAvatarId,
+          name: user?.name || '',
+          email: user?.email || '',
+          avatarUrl: user?.avatarUrl,
+          selectedAvatarId: user?.selectedAvatarId || undefined,
         }}
         onSubmit={handleSaveProfile}
         onClose={handleCloseEditProfile}
