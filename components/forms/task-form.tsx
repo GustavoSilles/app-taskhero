@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
 import { IconSymbol } from '../ui/icon-symbol';
@@ -58,6 +58,8 @@ export function TaskForm({ initialData, onSubmit, onCancel, resetKey }: TaskForm
       return;
     }
 
+    Keyboard.dismiss();
+
     onSubmit({
       title: title.trim(),
       priority,
@@ -72,7 +74,10 @@ export function TaskForm({ initialData, onSubmit, onCancel, resetKey }: TaskForm
 
   return (
     <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.container}>
+      <ScrollView 
+        style={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <ThemedView style={styles.content}>
           <ThemedText type="subtitle" style={styles.formTitle}>
             {initialData ? 'Editar Tarefa' : 'Nova Tarefa'}
@@ -107,7 +112,7 @@ export function TaskForm({ initialData, onSubmit, onCancel, resetKey }: TaskForm
                 setErrors({ ...errors, title: undefined });
               }
             }}
-            placeholder="Ex: Revisar documentação"
+            placeholder="Título da tarefa"
             placeholderTextColor={colors.icon}
           />
           {errors.title && (

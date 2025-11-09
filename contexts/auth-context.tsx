@@ -56,7 +56,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   const handleWebSocketMessage = (data: WebSocketMessage) => {
-    // Se é uma notificação de conquista
+    // Se é uma notificação de emblema desbloqueado
+    if (data.type === 'EMBLEMA_DESBLOQUEADO') {
+      const emblemaTitle = data.data?.title || data.titulo || 'Novo Emblema';
+      const emblemaDescription = data.data?.description || data.message || '';
+      
+      toast.success(
+        `🏆 Emblema Desbloqueado!`,
+        `${emblemaTitle}${emblemaDescription ? ': ' + emblemaDescription : ''}`
+      );
+      return;
+    }
+    
+    // Se é uma notificação de conquista (mantém compatibilidade)
     if (data.message && data.titulo) {
       toast.success('🎉 Nova Conquista!', data.titulo);
       return;

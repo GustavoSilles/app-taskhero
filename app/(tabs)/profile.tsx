@@ -9,13 +9,13 @@ import { StatsCard } from '@/components/stats-card';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
-import { getUnlockedBadges } from '@/mocks/badges';
 import { useAuth } from '@/contexts/auth-context';
 import { EditProfileBottomSheet } from '@/components/bottom-sheets/edit-profile-bottom-sheet';
 import { ThemeSelector } from '@/components/theme-selector';
 import { ConfirmationModal } from '@/components/confirmation-modal';
 import { useToast } from '@/contexts/toast-context';
-import { getUserStats } from '@/services/api';
+import { getUserStats, listUnlockedBadges, EmblemaResponse } from '@/services/api';
+import { websocketService } from '@/services/websocket';
 
 export default function ProfileScreen() {
   const { colorScheme } = useTheme();
@@ -25,6 +25,11 @@ export default function ProfileScreen() {
   const editProfileBottomSheetRef = useRef<BottomSheet>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  
+  // Estado para emblemas
+  const [badges, setBadges] = useState<EmblemaResponse[]>([]);
+  const [loadingBadges, setLoadingBadges] = useState(true);
+  
   const [stats, setStats] = useState({
     total: 0,
     completed: 0,
@@ -52,7 +57,45 @@ export default function ProfileScreen() {
     };
 
     loadStats();
-  }, [token, toast]);
+  }, [token]);
+
+  useEffect(() => {
+    const loadBadges = async () => {
+      if (!token) return;
+      
+      try {
+        setLoadingBadges(true);
+        const response = await listUnlockedBadges(token);
+        setBadges(response.data);
+      } catch (error: any) {
+        console.error('Erro ao carregar emblemas:', error);
+        toast.error('Erro', 'Não foi possível carregar os emblemas');
+      } finally {
+        setLoadingBadges(false);
+      }
+    };
+
+    loadBadges();
+  }, [token]);
+
+  useEffect(() => {
+    const unsubscribe = websocketService.subscribe((data) => {
+      if (data.type === 'EMBLEMA_DESBLOQUEADO' && token) {
+
+        listUnlockedBadges(token)
+          .then(response => setBadges(response.data))
+          .catch(error => console.error('Erro ao atualizar emblemas:', error));
+      }
+      
+      if ((data.type === 'USER_UPDATE' || data.level !== undefined || data.xp_points !== undefined) && token) {
+        getUserStats(token)
+          .then(response => setStats(response.data))
+          .catch(error => console.error('Erro ao atualizar estatísticas:', error));
+      }
+    });
+
+    return unsubscribe;
+  }, [token]);
 
   // Calcular estatísticas
   const totalGoals = stats.total;
@@ -132,9 +175,6 @@ export default function ProfileScreen() {
     router.replace('/(auth)/login');
   };
 
-  // No perfil, mostramos APENAS os emblemas que o usuário desbloqueou
-  const badges = getUnlockedBadges();
-
   return (
     <>
       <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -207,12 +247,16 @@ export default function ProfileScreen() {
             style={styles.badgesScroll}
           >
             {badges.map((badge) => (
-              <RewardBadge key={badge.id} {...badge} />
+              <RewardBadge 
+                key={badge.id} 
+                {...badge} 
+                unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
+              />
             ))}
           </ScrollView>
         ) : (
           <View style={[styles.emptyBadges, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-            <IconSymbol name="trophy" size={32} color={colors.icon} style={{ opacity: 0.3 }} />
+            <IconSymbol name="trophy.fill" size={32} color={colors.icon} style={{ opacity: 0.3 }} />
             <ThemedText style={styles.emptyBadgesText}>
               Você ainda não possui emblemas
             </ThemedText>

@@ -148,7 +148,7 @@ export function GoalForm({ initialData, onSubmit, onCancel, resetKey }: GoalForm
                 setErrors({ ...errors, title: undefined });
               }
             }}
-            placeholder="Ex: Aprender React Native"
+            placeholder="Título da meta"
             placeholderTextColor={colors.icon}
           />
           {errors.title && (

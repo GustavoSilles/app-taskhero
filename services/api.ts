@@ -715,3 +715,75 @@ export async function listUserRecompensas(token: string): Promise<ListRecompensa
     throw error;
   }
 }
+
+// ============================================
+// FUNÇÕES - EMBLEMAS
+// ============================================
+
+export interface EmblemaResponse {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  requirement: string;
+  category: 'tasks' | 'goals' | 'streak' | 'level' | 'special';
+  unlocked: boolean;
+  unlockedAt?: string;
+}
+
+export interface ListEmblemasResponse {
+  data: EmblemaResponse[];
+}
+
+/**
+ * Lista todos os emblemas com informação se o usuário desbloqueou ou não
+ */
+export async function listAllBadges(token: string): Promise<ListEmblemasResponse> {
+  try {
+    const response = await fetch(`${API_URL}/recompensa/emblemas/all`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Erro ao listar emblemas');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Erro ao listar emblemas:', error);
+    throw error;
+  }
+}
+
+/**
+ * Lista apenas os emblemas desbloqueados do usuário
+ */
+export async function listUnlockedBadges(token: string): Promise<ListEmblemasResponse> {
+  try {
+    const response = await fetch(`${API_URL}/recompensa/emblemas/unlocked`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      throw new Error(responseData.message || 'Erro ao listar emblemas desbloqueados');
+    }
+
+    return responseData;
+  } catch (error) {
+    console.error('Erro ao listar emblemas desbloqueados:', error);
+    throw error;
+  }
+}
+

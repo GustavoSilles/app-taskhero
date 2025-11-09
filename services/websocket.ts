@@ -2,6 +2,9 @@
 // Atualiza coins, XP, nível e notificações de conquistas
 
 type WebSocketMessage = {
+  // Tipo da mensagem
+  type?: 'EMBLEMA_DESBLOQUEADO' | 'USER_UPDATE' | 'AVATAR_UNLOCKED';
+  
   // Dados do usuário atualizados
   id?: string;
   nome?: string;
@@ -10,9 +13,19 @@ type WebSocketMessage = {
   xp_points?: number;
   task_coins?: number;
   
-  // Notificação de conquista
+  // Notificação genérica
   message?: string;
   titulo?: string;
+  
+  // Dados específicos (emblema, avatar, etc)
+  data?: {
+    id?: string;
+    title?: string;
+    description?: string;
+    icon?: string;
+    unlockedAt?: Date;
+    [key: string]: any;
+  };
 };
 
 type WebSocketCallback = (data: WebSocketMessage) => void;

@@ -11,16 +11,18 @@ import { useToast } from '@/contexts/toast-context';
 import { useState, useRef, useEffect } from 'react';
 import { AVATARS } from '@/constants/avatars';
 import { BuyAvatarModal } from '@/components/buy-avatar-modal';
-import { getAllBadges } from '@/mocks/badges';
-import { buyAvatar, updateUserAvatar } from '@/services/api';
+import { buyAvatar, updateUserAvatar, listAllBadges, EmblemaResponse } from '@/services/api';
+import { websocketService } from '@/services/websocket';
 
 export default function RewardsScreen() {
   const params = useLocalSearchParams();
   const scrollViewRef = useRef<ScrollView>(null);
   const avatarsSectionRef = useRef<View>(null);
   
-  // Na tela de recompensas, mostramos TODOS os emblemas disponíveis
-  const [badges] = useState(getAllBadges());
+  // Estado para emblemas da API
+  const [badges, setBadges] = useState<EmblemaResponse[]>([]);
+  const [loadingBadges, setLoadingBadges] = useState(true);
+  
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const { user, updateSelectedAvatar, token, unlockedAvatars, refreshUnlockedAvatars } = useAuth();
@@ -31,6 +33,40 @@ export default function RewardsScreen() {
   const [showBuyModal, setShowBuyModal] = useState(false);
   const [selectedAvatarToBuy, setSelectedAvatarToBuy] = useState<typeof AVATARS[0] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Carregar emblemas da API
+  useEffect(() => {
+    const loadBadges = async () => {
+      if (!token) return;
+      
+      try {
+        setLoadingBadges(true);
+        const response = await listAllBadges(token);
+        setBadges(response.data);
+      } catch (error: any) {
+        console.error('Erro ao carregar emblemas:', error);
+        toast.error('Erro', 'Não foi possível carregar os emblemas');
+      } finally {
+        setLoadingBadges(false);
+      }
+    };
+
+    loadBadges();
+  }, [token]);
+
+  // Listener WebSocket para atualizar emblemas quando desbloqueados
+  useEffect(() => {
+    const unsubscribe = websocketService.subscribe((data) => {
+      if (data.type === 'EMBLEMA_DESBLOQUEADO' && token) {
+        // Recarrega os emblemas quando um novo for desbloqueado
+        listAllBadges(token)
+          .then(response => setBadges(response.data))
+          .catch(error => console.error('Erro ao atualizar emblemas:', error));
+      }
+    });
+
+    return unsubscribe;
+  }, [token]);
   
   // Prepara os avatares com status de desbloqueio do backend
   const avatars = AVATARS.map(avatar => ({
@@ -182,7 +218,11 @@ export default function RewardsScreen() {
           contentContainerStyle={styles.badgesScrollContent}
         >
           {badges.map((badge) => (
-            <RewardBadge key={badge.id} {...badge} />
+            <RewardBadge 
+              key={badge.id} 
+              {...badge} 
+              unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
+            />
           ))}
         </ScrollView>
       </View>
