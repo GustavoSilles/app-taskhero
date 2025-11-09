@@ -21,7 +21,6 @@ export default function RewardsScreen() {
   
   // Estado para emblemas da API
   const [badges, setBadges] = useState<EmblemaResponse[]>([]);
-  const [loadingBadges, setLoadingBadges] = useState(true);
   
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -40,19 +39,16 @@ export default function RewardsScreen() {
       if (!token) return;
       
       try {
-        setLoadingBadges(true);
         const response = await listAllBadges(token);
         setBadges(response.data);
       } catch (error: any) {
         console.error('Erro ao carregar emblemas:', error);
         toast.error('Erro', 'Não foi possível carregar os emblemas');
-      } finally {
-        setLoadingBadges(false);
       }
     };
 
     loadBadges();
-  }, [token]);
+  }, [token, toast]);
 
   // Listener WebSocket para atualizar emblemas quando desbloqueados
   useEffect(() => {

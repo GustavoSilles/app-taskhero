@@ -28,7 +28,6 @@ export default function ProfileScreen() {
   
   // Estado para emblemas
   const [badges, setBadges] = useState<EmblemaResponse[]>([]);
-  const [loadingBadges, setLoadingBadges] = useState(true);
   
   const [stats, setStats] = useState({
     total: 0,
@@ -57,26 +56,23 @@ export default function ProfileScreen() {
     };
 
     loadStats();
-  }, [token]);
+  }, [token, toast]);
 
   useEffect(() => {
     const loadBadges = async () => {
       if (!token) return;
       
       try {
-        setLoadingBadges(true);
         const response = await listUnlockedBadges(token);
         setBadges(response.data);
       } catch (error: any) {
         console.error('Erro ao carregar emblemas:', error);
         toast.error('Erro', 'Não foi possível carregar os emblemas');
-      } finally {
-        setLoadingBadges(false);
       }
     };
 
     loadBadges();
-  }, [token]);
+  }, [token, toast]);
 
   useEffect(() => {
     const unsubscribe = websocketService.subscribe((data) => {
