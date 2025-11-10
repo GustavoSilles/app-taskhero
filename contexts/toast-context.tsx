@@ -90,9 +90,11 @@ export function useToast() {
 const styles = StyleSheet.create({
   toastContainer: {
     position: 'absolute',
-    top: 0,
+    top: 60,
     left: 0,
     right: 0,
     zIndex: 9999,
+    flexDirection: 'column',
+    alignItems: 'stretch',
   },
 });

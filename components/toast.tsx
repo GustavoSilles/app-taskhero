@@ -137,10 +137,8 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
 
 const styles = StyleSheet.create({
   container: {
-    position: 'absolute',
-    top: 60,
-    left: 16,
-    right: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
     maxWidth: width - 32,
     borderRadius: 12,
     shadowColor: '#000',
@@ -151,7 +149,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4.65,
     elevation: 8,
-    zIndex: 9999,
   },
   content: {
     flexDirection: 'row',
