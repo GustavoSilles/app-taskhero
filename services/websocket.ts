@@ -3,7 +3,7 @@
 
 type WebSocketMessage = {
   // Tipo da mensagem
-  type?: 'EMBLEMA_DESBLOQUEADO' | 'USER_UPDATE' | 'AVATAR_UNLOCKED';
+  type?: 'EMBLEMA_DESBLOQUEADO' | 'USER_UPDATE' | 'AVATAR_UNLOCKED' | 'STATS_UPDATE';
   
   // Dados do usuário atualizados
   id?: string;
@@ -46,7 +46,7 @@ class WebSocketService {
     }
 
     this.userId = userId;
-    const wsUrl = `ws://192.168.1.123:8080?userId=${userId}`
+    const wsUrl = `ws://192.168.251.164:8080?userId=${userId}`
 
     try {
       this.ws = new WebSocket(wsUrl);

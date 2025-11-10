@@ -83,7 +83,11 @@ export default function ProfileScreen() {
           .catch(error => console.error('Erro ao atualizar emblemas:', error));
       }
       
-      if ((data.type === 'USER_UPDATE' || data.level !== undefined || data.xp_points !== undefined) && token) {
+
+      if ((data.type === 'USER_UPDATE' || 
+           data.type === 'STATS_UPDATE' || 
+           data.level !== undefined || 
+           data.xp_points !== undefined) && token) {
         getUserStats(token)
           .then(response => setStats(response.data))
           .catch(error => console.error('Erro ao atualizar estatísticas:', error));
