@@ -139,11 +139,23 @@ export default function HomeScreen() {
 
         {goals.length === 0 ? (
           <EmptyState
-            icon="flag"
-            title={isLoading ? "Carregando..." : "Nenhuma meta encontrada"}
-            description={isLoading ? "Buscando suas metas..." : "Crie sua primeira meta e comece sua jornada!"}
-            actionLabel="Criar Meta"
-            onActionPress={handleOpenGoalBottomSheet}
+            icon={currentFilter !== 'all' ? "magnifyingglass" : "flag"}
+            title={
+              isLoading 
+                ? "Carregando..." 
+                : currentFilter !== 'all' 
+                  ? "Nenhuma meta com este filtro" 
+                  : "Pronto para começar sua jornada?"
+            }
+            description={
+              isLoading 
+                ? "Buscando suas metas..." 
+                : currentFilter !== 'all'
+                  ? "Tente ajustar os filtros ou crie uma nova meta para começar."
+                  : "Defina sua primeira meta e transforme seus sonhos em conquistas! Cada grande jornada começa com um simples passo."
+            }
+            actionLabel={currentFilter !== 'all' ? "Limpar Filtros" : "Criar Minha Primeira Meta"}
+            onActionPress={currentFilter !== 'all' ? () => setCurrentFilter('all') : handleOpenGoalBottomSheet}
           />
         ) : (
           <>

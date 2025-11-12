@@ -46,7 +46,7 @@ class WebSocketService {
     }
 
     this.userId = userId;
-    const wsUrl = `ws://192.168.251.164:8080?userId=${userId}`
+    const wsUrl = `ws://192.168.1.130:8080?userId=${userId}`
 
     try {
       this.ws = new WebSocket(wsUrl);

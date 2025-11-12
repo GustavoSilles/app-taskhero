@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Keyboard } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, Keyboard } from 'react-native';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
 import { IconSymbol } from '../ui/icon-symbol';
@@ -74,14 +74,10 @@ export function TaskForm({ initialData, onSubmit, onCancel, resetKey }: TaskForm
 
   return (
     <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-      <ScrollView 
-        style={styles.container}
-        keyboardShouldPersistTaps="handled"
-      >
-        <ThemedView style={styles.content}>
-          <ThemedText type="subtitle" style={styles.formTitle}>
-            {initialData ? 'Editar Tarefa' : 'Nova Tarefa'}
-          </ThemedText>
+      <ThemedView style={styles.content}>
+        <ThemedText type="subtitle" style={styles.formTitle}>
+          {initialData ? 'Editar Tarefa' : 'Nova Tarefa'}
+        </ThemedText>
 
           {/* Mensagem de erro geral */}
           {errors.general && (
@@ -172,16 +168,12 @@ export function TaskForm({ initialData, onSubmit, onCancel, resetKey }: TaskForm
           </TouchableOpacity>
         </View>
       </ThemedView>
-      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   modalContainer: {
-    flex: 1,
-  },
-  container: {
     flex: 1,
   },
   content: {

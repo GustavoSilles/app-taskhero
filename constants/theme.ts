@@ -8,9 +8,9 @@ import { Platform } from 'react-native';
 
 // Cores Primárias
 const primaryOrangeLight = '#FF7A00';
-const primaryOrangeDark = '#FF9E44';
-const secondaryPurpleLight = '#7B2CBF';
-const secondaryPurpleDark = '#9D4EDD';
+const primaryOrangeDark = '#FF7A00';
+const secondaryPurpleLight = '#7803D4';
+const secondaryPurpleDark = '#7803D4';
 
 export const Colors = {
   light: {

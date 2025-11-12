@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { StyleSheet, View, TextInput, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { StyleSheet, View, TextInput, TouchableOpacity, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { ThemedText } from '../themed-text';
 import { ThemedView } from '../themed-view';
@@ -113,11 +113,10 @@ export function GoalForm({ initialData, onSubmit, onCancel, resetKey }: GoalForm
 
   return (
     <View style={[styles.modalContainer, { backgroundColor: colors.background }]}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
-        <ThemedView style={styles.content}>
-          <ThemedText type="subtitle" style={styles.formTitle}>
-            {initialData ? 'Editar Meta' : 'Nova Meta'}
-          </ThemedText>
+      <ThemedView style={styles.content}>
+        <ThemedText type="subtitle" style={styles.formTitle}>
+          {initialData ? 'Editar Meta' : 'Nova Meta'}
+        </ThemedText>
 
         {/* Mensagem de erro geral */}
         {errors.general && (
@@ -277,7 +276,6 @@ export function GoalForm({ initialData, onSubmit, onCancel, resetKey }: GoalForm
           </TouchableOpacity>
         </View>
       </ThemedView>
-      </ScrollView>
     </View>
   );
 }
@@ -285,12 +283,6 @@ export function GoalForm({ initialData, onSubmit, onCancel, resetKey }: GoalForm
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-  },
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
   },
   content: {
     padding: 20,

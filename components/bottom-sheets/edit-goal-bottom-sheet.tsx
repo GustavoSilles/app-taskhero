@@ -1,6 +1,6 @@
-import React, { useMemo, forwardRef } from 'react';
-import { StyleSheet } from 'react-native';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import React, { useMemo, forwardRef, useState, useCallback, useEffect } from 'react';
+import { StyleSheet, Keyboard } from 'react-native';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { GoalForm } from '../forms/goal-form';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
@@ -23,8 +23,24 @@ export const EditGoalBottomSheet = forwardRef<BottomSheet, EditGoalBottomSheetPr
   ({ goalData, onSubmit, onClose, onChange }, ref) => {
     const { colorScheme } = useTheme();
     const colors = Colors[colorScheme ?? 'light'];
+    const [resetKey, setResetKey] = useState(0);
+    const [keyboardHeight, setKeyboardHeight] = useState(0);
     
-    const snapPoints = useMemo(() => ['85%', '95%'], []);
+    const snapPoints = useMemo(() => ['85%', '100%'], []);
+
+    useEffect(() => {
+      const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
+      });
+      const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+        setKeyboardHeight(0);
+      });
+
+      return () => {
+        keyboardDidShowListener.remove();
+        keyboardDidHideListener.remove();
+      };
+    }, []);
 
     const renderBackdrop = (props: BottomSheetBackdropProps) => (
       <BottomSheetBackdrop
@@ -35,6 +51,19 @@ export const EditGoalBottomSheet = forwardRef<BottomSheet, EditGoalBottomSheetPr
       />
     );
 
+    const handleChange = useCallback((index: number) => {
+      // Quando o bottom sheet fecha (index < 0), reseta o formulário
+      if (index < 0) {
+        setResetKey(prev => prev + 1);
+      }
+      onChange?.(index);
+    }, [onChange]);
+
+    const handleClose = useCallback(() => {
+      Keyboard.dismiss();
+      onClose();
+    }, [onClose]);
+
     return (
       <BottomSheet
         ref={ref}
@@ -42,18 +71,29 @@ export const EditGoalBottomSheet = forwardRef<BottomSheet, EditGoalBottomSheetPr
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
-        onClose={onClose}
-        onChange={onChange}
+        onClose={handleClose}
+        onChange={handleChange}
+        keyboardBehavior="interactive"
+        keyboardBlurBehavior="restore"
+        android_keyboardInputMode="adjustResize"
         handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.primary }]}
         backgroundStyle={[styles.background, { backgroundColor: colors.surface }]}
       >
-        <BottomSheetView style={styles.container}>
+        <BottomSheetScrollView 
+          style={styles.container} 
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 20 }
+          ]}
+          keyboardShouldPersistTaps="handled"
+        >
           <GoalForm 
+            resetKey={resetKey}
             initialData={goalData}
             onSubmit={onSubmit} 
-            onCancel={onClose} 
+            onCancel={handleClose} 
           />
-        </BottomSheetView>
+        </BottomSheetScrollView>
       </BottomSheet>
     );
   }
@@ -64,6 +104,9 @@ EditGoalBottomSheet.displayName = 'EditGoalBottomSheet';
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    // paddingBottom é definido dinamicamente baseado no estado do teclado
   },
   handleIndicator: {
     width: 40,

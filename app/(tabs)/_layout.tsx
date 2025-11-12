@@ -37,7 +37,7 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.border,
           borderTopWidth: 1,
-          height: 60 + insets.bottom,
+          height: 70 + insets.bottom,
           paddingBottom: insets.bottom,
         },
         tabBarLabelStyle: {
@@ -48,7 +48,7 @@ export default function TabLayout() {
         headerShown: true,
         headerStyle: {
           backgroundColor: colors.surface,
-          height: Platform.OS === 'ios' ? 100 : 60 + insets.top,
+          height: Platform.OS === 'ios' ? 120 : 70 + insets.top,
         },
         headerTintColor: colors.text,
         headerTitleAlign: 'center',

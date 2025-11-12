@@ -27,10 +27,9 @@ export function EmptyState({
     <ThemedView style={styles.container}>
       <View
         style={[
-          styles.iconContainer,
-          { backgroundColor: colors.disabled },
+          styles.iconContainer
         ]}>
-        <IconSymbol name={icon as any} size={48} color={colors.icon} />
+        <IconSymbol name={icon as any} size={64} color={colors.primary} />
       </View>
 
       <ThemedText type="subtitle" style={styles.title}>
@@ -66,7 +65,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     width: 96,
     height: 96,
-    borderRadius: 48,
+    borderRadius: 100,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,

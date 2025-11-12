@@ -1,6 +1,6 @@
 import React, { useMemo, forwardRef, useState, useEffect, useCallback } from 'react';
 import { StyleSheet, Keyboard } from 'react-native';
-import BottomSheet, { BottomSheetBackdrop, BottomSheetView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetBackdrop, BottomSheetScrollView, BottomSheetBackdropProps } from '@gorhom/bottom-sheet';
 import { TaskForm } from '../forms/task-form';
 import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
@@ -51,6 +51,11 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
       }
     }, []);
 
+    const handleClose = useCallback(() => {
+      Keyboard.dismiss();
+      onClose();
+    }, [onClose]);
+
     return (
       <BottomSheet
         ref={ref}
@@ -58,7 +63,7 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
-        onClose={onClose}
+        onClose={handleClose}
         onChange={handleChange}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
@@ -66,9 +71,12 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
         handleIndicatorStyle={[styles.handleIndicator, { backgroundColor: colors.primary }]}
         backgroundStyle={[styles.background, { backgroundColor: colors.surface }]}
       >
-        <BottomSheetView style={styles.container}>
-          <TaskForm resetKey={resetKey} onSubmit={onSubmit} onCancel={onClose} />
-        </BottomSheetView>
+        <BottomSheetScrollView 
+          style={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TaskForm resetKey={resetKey} onSubmit={onSubmit} onCancel={handleClose} />
+        </BottomSheetScrollView>
       </BottomSheet>
     );
   }

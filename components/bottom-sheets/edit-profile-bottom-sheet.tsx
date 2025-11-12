@@ -23,16 +23,16 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
   ({ initialData, onSubmit, onClose, onAvatarEdit, onChange, isLoading = false }, ref) => {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
     const snapPoints = useMemo(() => ['100%'], []);
 
     useEffect(() => {
-      const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
-        setIsKeyboardVisible(true);
+      const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', (e) => {
+        setKeyboardHeight(e.endCoordinates.height);
       });
       const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
-        setIsKeyboardVisible(false);
+        setKeyboardHeight(0);
       });
 
       return () => {
@@ -50,6 +50,11 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
       />
     );
 
+    const handleClose = () => {
+      Keyboard.dismiss();
+      onClose();
+    };
+
     return (
       <BottomSheet
         ref={ref}
@@ -57,7 +62,7 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
         snapPoints={snapPoints}
         enablePanDownToClose
         backdropComponent={renderBackdrop}
-        onClose={onClose}
+        onClose={handleClose}
         onChange={onChange}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
@@ -69,14 +74,14 @@ export const EditProfileBottomSheet = forwardRef<BottomSheet, EditProfileBottomS
           style={styles.container} 
           contentContainerStyle={[
             styles.scrollContent,
-            { paddingBottom: isKeyboardVisible ? 300 : 20 }
+            { paddingBottom: keyboardHeight > 0 ? keyboardHeight + 20 : 20 }
           ]}
           keyboardShouldPersistTaps="handled"
         >
           <EditProfileForm
             initialData={initialData}
             onSubmit={onSubmit}
-            onCancel={onClose}
+            onCancel={handleClose}
             onAvatarEdit={onAvatarEdit}
             isLoading={isLoading}
           />
