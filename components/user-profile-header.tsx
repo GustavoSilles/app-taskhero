@@ -6,6 +6,7 @@ import { Colors } from '@/constants/theme';
 import { useTheme } from '@/contexts/theme-context';
 import { getLevelName } from '@/utils/level-calculation';
 import { getAvatarImage } from '@/constants/avatars';
+import TextTicker from 'react-native-text-ticker';
 
 interface UserProfileHeaderProps {
   name: string;
@@ -83,7 +84,15 @@ export function UserProfileHeader({
           <ThemedText type="defaultSemiBold" style={styles.statValue}>
             {totalPoints}
           </ThemedText>
-          <ThemedText style={styles.statLabel}>XP</ThemedText>
+          <TextTicker
+            style={[styles.statLabel, { color: colors.text }]}
+            duration={3000}
+            loop
+            bounce
+            repeatSpacer={10}
+            marqueeDelay={1000}>
+            XP
+          </TextTicker>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -95,7 +104,15 @@ export function UserProfileHeader({
               {taskCoins}
             </ThemedText>
           </View>
-          <ThemedText style={styles.statLabel}>Coins</ThemedText>
+          <TextTicker
+            style={[styles.statLabel, { color: colors.text }]}
+            duration={3000}
+            loop
+            bounce
+            repeatSpacer={10}
+            marqueeDelay={1000}>
+            Coins
+          </TextTicker>
         </View>
 
         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -104,7 +121,15 @@ export function UserProfileHeader({
           <ThemedText type="defaultSemiBold" style={styles.statValue}>
             {goalsCompleted}
           </ThemedText>
-          <ThemedText style={styles.statLabel}>Metas Concluídas</ThemedText>
+          <TextTicker
+            style={[styles.statLabel, { color: colors.text }]}
+            duration={3000}
+            loop
+            bounce
+            repeatSpacer={10}
+            marqueeDelay={1000}>
+            Metas Concluídas
+          </TextTicker>
         </View>
       </View>
     </ThemedView>
@@ -178,6 +203,7 @@ const styles = StyleSheet.create({
   statItem: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: 10,
   },
   statValue: {
     fontSize: 24,

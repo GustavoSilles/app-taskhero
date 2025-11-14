@@ -81,8 +81,7 @@ export function FilterBar({
                   backgroundColor: colors.secondary,
                 },
                 currentSort !== sort.value && {
-                  borderColor: colors.border,
-                  borderWidth: 1,
+                  backgroundColor: colors.disabled,
                 },
               ]}>
               <IconSymbol

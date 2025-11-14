@@ -2,6 +2,9 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from './themed-text';
 import { ThemedView } from './themed-view';
 import { IconSymbol } from './ui/icon-symbol';
+import TextTicker from 'react-native-text-ticker';
+import { useTheme } from '@/contexts/theme-context';
+import { Colors } from '@/constants/theme';
 
 interface StatsCardProps {
   icon: string;
@@ -11,6 +14,9 @@ interface StatsCardProps {
 }
 
 export function StatsCard({ icon, label, value, color = '#4caf50' }: StatsCardProps) {
+  const { colorScheme } = useTheme();
+  const colors = Colors[colorScheme ?? 'light'];
+
   return (
     <ThemedView style={styles.container}>
       <View style={[styles.iconContainer, { backgroundColor: color }]}>
@@ -20,7 +26,15 @@ export function StatsCard({ icon, label, value, color = '#4caf50' }: StatsCardPr
         <ThemedText type="defaultSemiBold" style={styles.value}>
           {value}
         </ThemedText>
-        <ThemedText style={styles.label}>{label}</ThemedText>
+        <TextTicker
+          style={[styles.label, { color: colors.text }]}
+          duration={3000}
+          loop
+          bounce
+          repeatSpacer={10}
+          marqueeDelay={1000}>
+          {label}
+        </TextTicker>
       </View>
     </ThemedView>
   );
