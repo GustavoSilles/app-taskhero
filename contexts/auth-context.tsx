@@ -29,6 +29,7 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 const TOKEN_KEY = '@taskhero:token';
 const USER_KEY = '@taskhero:user';
 const UNLOCKED_AVATARS_KEY = '@taskhero:unlocked_avatars';
+const LOGIN_DATE_KEY = '@taskhero:login_date';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -119,8 +120,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedToken = await AsyncStorage.getItem(TOKEN_KEY);
       const storedUser = await AsyncStorage.getItem(USER_KEY);
       const storedUnlockedAvatars = await AsyncStorage.getItem(UNLOCKED_AVATARS_KEY);
+      const loginDate = await AsyncStorage.getItem(LOGIN_DATE_KEY);
 
       if (storedToken && storedUser) {
+        // Verifica se o token expirou (29 dias)
+        if (loginDate) {
+          const loginTime = new Date(loginDate).getTime();
+          const currentTime = new Date().getTime();
+          const daysPassed = (currentTime - loginTime) / (1000 * 60 * 60 * 24);
+
+          // Se passou mais de 29 dias, faz logout automático
+          if (daysPassed >= 29) {
+            console.log('Token expirado após 29 dias. Fazendo logout automático.');
+            await AsyncStorage.removeItem(TOKEN_KEY);
+            await AsyncStorage.removeItem(USER_KEY);
+            await AsyncStorage.removeItem(UNLOCKED_AVATARS_KEY);
+            await AsyncStorage.removeItem(LOGIN_DATE_KEY);
+            setIsLoading(false);
+            return;
+          }
+        }
+
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
         
@@ -211,9 +231,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(response.data.token);
       setUser(userData);
 
-      // Salva no AsyncStorage
+      // Salva no AsyncStorage com data de login
+      const currentDate = new Date().toISOString();
       await AsyncStorage.setItem(TOKEN_KEY, response.data.token);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
+      await AsyncStorage.setItem(LOGIN_DATE_KEY, currentDate);
 
       // Carrega avatares desbloqueados
       try {
@@ -250,9 +272,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(loginResponse.data.token);
       setUser(userData);
 
-      // Salva no AsyncStorage
+      // Salva no AsyncStorage com data de login
+      const currentDate = new Date().toISOString();
       await AsyncStorage.setItem(TOKEN_KEY, loginResponse.data.token);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(userData));
+      await AsyncStorage.setItem(LOGIN_DATE_KEY, currentDate);
 
       // Carrega avatares desbloqueados do backend
       try {
@@ -285,6 +309,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.removeItem(TOKEN_KEY);
     await AsyncStorage.removeItem(USER_KEY);
     await AsyncStorage.removeItem(UNLOCKED_AVATARS_KEY);
+    await AsyncStorage.removeItem(LOGIN_DATE_KEY);
   };
 
   const updateSelectedAvatar = async (avatarId: string) => {
@@ -301,9 +326,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(newToken);
       setUser(updatedUser);
 
-      // Persiste no AsyncStorage
+      // Persiste no AsyncStorage e atualiza a data de login (novo token = nova sessão)
+      const currentDate = new Date().toISOString();
       await AsyncStorage.setItem(TOKEN_KEY, newToken);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      await AsyncStorage.setItem(LOGIN_DATE_KEY, currentDate);
 
       console.log('AuthContext - Avatar atualizado e persistido:', avatarId);
     } catch (error) {
@@ -343,9 +370,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setToken(response.data.token);
       setUser(updatedUser);
 
-      // Salva no AsyncStorage
+      // Salva no AsyncStorage e atualiza a data de login (novo token = nova sessão)
+      const currentDate = new Date().toISOString();
       await AsyncStorage.setItem(TOKEN_KEY, response.data.token);
       await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      await AsyncStorage.setItem(LOGIN_DATE_KEY, currentDate);
 
       console.log('AuthContext - Perfil atualizado com sucesso:', updatedUser.name);
     } catch (error) {
