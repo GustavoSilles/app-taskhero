@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { GoalStatusBadge } from '@/components/goal-status-badge';
@@ -25,6 +25,7 @@ export default function GoalDetailScreen() {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
   const toast = useToast();
+  const insets = useSafeAreaInsets();
   const {deleteGoal, updateGoal, concludeGoal, getGoalById } = useGoals();
   const { tasks, fetchTasks, createTask, updateTask, deleteTask: deleteTaskFromContext, concludeTask } = useTasks();
 
@@ -291,7 +292,10 @@ export default function GoalDetailScreen() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'left', 'right']}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScrollView 
+          style={[styles.container, { backgroundColor: colors.background }]}
+          contentContainerStyle={{ paddingBottom: insets.bottom }}
+        >
           {/* Cabeçalho da Meta */}
           <View style={styles.header}>
         <View style={styles.headerTop}>
