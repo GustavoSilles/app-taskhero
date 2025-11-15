@@ -16,6 +16,7 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
     const colors = Colors[colorScheme ?? 'light'];
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
     const [resetKey, setResetKey] = useState(0);
+    const sheetRef = ref as React.RefObject<BottomSheet>;
     
     const snapPoints = useMemo(() => {
       return isKeyboardVisible ? ['90%'] : ['50%', '65%'];
@@ -56,6 +57,14 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
       onClose();
     }, [onClose]);
 
+    const handleSubmit = useCallback((data: any) => {
+      // Fecha o bottom sheet imediatamente
+      sheetRef.current?.close();
+      Keyboard.dismiss();
+      // Chama o onSubmit após fechar
+      onSubmit(data);
+    }, [onSubmit, sheetRef]);
+
     return (
       <BottomSheet
         ref={ref}
@@ -75,7 +84,7 @@ export const CreateTaskBottomSheet = forwardRef<BottomSheet, CreateTaskBottomShe
           style={styles.container}
           keyboardShouldPersistTaps="handled"
         >
-          <TaskForm resetKey={resetKey} onSubmit={onSubmit} onCancel={handleClose} />
+          <TaskForm resetKey={resetKey} onSubmit={handleSubmit} onCancel={handleClose} />
         </BottomSheetScrollView>
       </BottomSheet>
     );
