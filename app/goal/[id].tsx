@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -32,6 +32,7 @@ export default function GoalDetailScreen() {
   const [showDeleteGoalModal, setShowDeleteGoalModal] = useState(false);
   const [showCompleteGoalModal, setShowCompleteGoalModal] = useState(false);
   const [goal, setGoal] = useState<any>(null);
+  const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   
   // Refs para os Bottom Sheets
   const taskBottomSheetRef = useRef<BottomSheet>(null);
@@ -58,7 +59,10 @@ export default function GoalDetailScreen() {
   // Carrega as tarefas quando a meta é carregada
   useEffect(() => {
     if (goal?.id) {
-      fetchTasks(goal.id);
+      setIsLoadingTasks(true);
+      fetchTasks(goal.id).finally(() => {
+        setIsLoadingTasks(false);
+      });
     }
   }, [goal?.id, fetchTasks]);
 
@@ -374,7 +378,12 @@ export default function GoalDetailScreen() {
           )}
         </View>
 
-        {tasks.length === 0 ? (
+        {isLoadingTasks ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <ThemedText style={styles.loadingText}>Carregando tarefas...</ThemedText>
+          </View>
+        ) : tasks.length === 0 ? (
           <EmptyState
             icon="checklist"
             title="Nenhuma tarefa"
@@ -600,6 +609,16 @@ const styles = StyleSheet.create({
   addButton: {
     fontSize: 16,
     fontWeight: '600',
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    opacity: 0.7,
   },
   actions: {
     padding: 20,

@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity, Image } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -21,6 +21,7 @@ export default function RewardsScreen() {
   
   // Estado para emblemas da API
   const [badges, setBadges] = useState<EmblemaResponse[]>([]);
+  const [isLoadingBadges, setIsLoadingBadges] = useState(true);
   
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -39,11 +40,14 @@ export default function RewardsScreen() {
       if (!token) return;
       
       try {
+        setIsLoadingBadges(true);
         const response = await listAllBadges(token);
         setBadges(response.data);
       } catch (error: any) {
         console.error('Erro ao carregar emblemas:', error);
         toast.error('Erro', 'Não foi possível carregar os emblemas');
+      } finally {
+        setIsLoadingBadges(false);
       }
     };
 
@@ -207,20 +211,27 @@ export default function RewardsScreen() {
           Todos os emblemas disponíveis no TaskHero. Conquiste-os completando desafios especiais!
         </ThemedText>
 
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.badgesScroll}
-          contentContainerStyle={styles.badgesScrollContent}
-        >
-          {badges.map((badge) => (
-            <RewardBadge 
-              key={badge.id} 
-              {...badge} 
-              unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
-            />
-          ))}
-        </ScrollView>
+        {isLoadingBadges ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <ThemedText style={styles.loadingText}>Carregando emblemas...</ThemedText>
+          </View>
+        ) : (
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            style={styles.badgesScroll}
+            contentContainerStyle={styles.badgesScrollContent}
+          >
+            {badges.map((badge) => (
+              <RewardBadge 
+                key={badge.id} 
+                {...badge} 
+                unlockedAt={badge.unlockedAt ? new Date(badge.unlockedAt) : undefined}
+              />
+            ))}
+          </ScrollView>
+        )}
       </View>
 
       {/* Seção de Avatares */}

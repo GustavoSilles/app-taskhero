@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, View, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
 import { useRef, useState, useEffect } from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -28,6 +28,7 @@ export default function ProfileScreen() {
   
   // Estado para emblemas
   const [badges, setBadges] = useState<EmblemaResponse[]>([]);
+  const [isLoadingBadges, setIsLoadingBadges] = useState(true);
   
   const [stats, setStats] = useState({
     total: 0,
@@ -63,11 +64,14 @@ export default function ProfileScreen() {
       if (!token) return;
       
       try {
+        setIsLoadingBadges(true);
         const response = await listUnlockedBadges(token);
         setBadges(response.data);
       } catch (error: any) {
         console.error('Erro ao carregar emblemas:', error);
         toast.error('Erro', 'Não foi possível carregar os emblemas');
+      } finally {
+        setIsLoadingBadges(false);
       }
     };
 
@@ -239,7 +243,12 @@ export default function ProfileScreen() {
           </ThemedText>
         </View>
 
-        {badges.length > 0 ? (
+        {isLoadingBadges ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={colors.primary} />
+            <ThemedText style={styles.loadingText}>Carregando emblemas...</ThemedText>
+          </View>
+        ) : badges.length > 0 ? (
           <ScrollView 
             horizontal 
             showsHorizontalScrollIndicator={false}
@@ -428,6 +437,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    opacity: 0.7,
   },
   emptyBadgesText: {
     fontSize: 14,
