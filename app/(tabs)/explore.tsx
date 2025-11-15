@@ -18,6 +18,7 @@ export default function RewardsScreen() {
   const params = useLocalSearchParams();
   const scrollViewRef = useRef<ScrollView>(null);
   const avatarsSectionRef = useRef<View>(null);
+  const badgesLoadedRef = useRef(false);
   
   // Estado para emblemas da API
   const [badges, setBadges] = useState<EmblemaResponse[]>([]);
@@ -39,10 +40,17 @@ export default function RewardsScreen() {
     const loadBadges = async () => {
       if (!token) return;
       
+      // Só carrega se ainda não carregou
+      if (badgesLoadedRef.current) {
+        setIsLoadingBadges(false);
+        return;
+      }
+      
       try {
         setIsLoadingBadges(true);
         const response = await listAllBadges(token);
         setBadges(response.data);
+        badgesLoadedRef.current = true;
       } catch (error: any) {
         console.error('Erro ao carregar emblemas:', error);
         toast.error('Erro', 'Não foi possível carregar os emblemas');
@@ -52,7 +60,7 @@ export default function RewardsScreen() {
     };
 
     loadBadges();
-  }, [token, toast]);
+  }, [token]);
 
   // Listener WebSocket para atualizar emblemas quando desbloqueados
   useEffect(() => {
@@ -115,20 +123,16 @@ export default function RewardsScreen() {
         return;
       }
 
+      // Atualiza imediatamente a UI (atualização otimista)
+      setSelectedAvatar(avatarId);
+      
+      // Depois atualiza no contexto (que persiste e sincroniza com backend)
       try {
-        // Salva no backend
-        await updateUserAvatar(token, avatarId);
-        
-        // Atualiza o contexto (que agora também persiste)
         await updateSelectedAvatar(avatarId);
-        
-        // Atualiza o estado local
-        setSelectedAvatar(avatarId);
-        
-        toast.success('Avatar Selecionado', `${avatar.name} está agora ativo!`);
       } catch (error: any) {
         console.error('Erro ao selecionar avatar:', error);
-        toast.error('Erro', error.message || 'Não foi possível selecionar o avatar');
+        // Mostra erro mas mantém a UI atualizada
+        toast.error('Aviso', 'Avatar selecionado, mas pode não ter sincronizado com o servidor');
       }
     } else {
       // Se está bloqueado, abre modal de compra
@@ -154,24 +158,23 @@ export default function RewardsScreen() {
       // Chama a API para comprar o avatar
       await buyAvatar(token, selectedAvatarToBuy.id);
 
-      // Atualiza a lista de avatares desbloqueados
-      await refreshUnlockedAvatars();
-
-      // Seleciona automaticamente o avatar comprado salvando no backend
-      await updateUserAvatar(token, selectedAvatarToBuy.id);
-      await updateSelectedAvatar(selectedAvatarToBuy.id);
+      // Atualiza imediatamente a UI (atualização otimista)
       setSelectedAvatar(selectedAvatarToBuy.id);
 
       // Fecha o modal
       setShowBuyModal(false);
 
       // Mostra toast de sucesso
-      setTimeout(() => {
-        toast.success(
-          'Avatar Desbloqueado! 🎉',
-          `${selectedAvatarToBuy.name} foi adicionado à sua coleção!`
-        );
-      }, 300);
+      toast.success(
+        'Avatar Desbloqueado! 🎉',
+        `${selectedAvatarToBuy.name} foi adicionado à sua coleção!`
+      );
+
+      // Atualiza em segundo plano
+      refreshUnlockedAvatars();
+      updateSelectedAvatar(selectedAvatarToBuy.id).catch(error => {
+        console.error('Erro ao sincronizar avatar:', error);
+      });
 
     } catch (error: any) {
       console.error('Erro ao comprar avatar:', error);
@@ -499,6 +502,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
+  },
+  loadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    opacity: 0.7,
   },
   // Cards de Informação
   infoCard: {

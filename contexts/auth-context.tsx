@@ -315,26 +315,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateSelectedAvatar = async (avatarId: string) => {
     if (!user || !token) return;
 
+    // ATUALIZAÇÃO OTIMISTA: Atualiza imediatamente no front-end
+    const previousUser = user;
+    const updatedUser = {
+      ...user,
+      selectedAvatarId: avatarId,
+    };
+    
+    setUser(updatedUser);
+    await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+    console.log('AuthContext - Avatar atualizado otimisticamente:', avatarId);
+
+    // Depois faz a chamada ao backend em segundo plano
     try {
-      // Chama a API para atualizar o avatar no backend
       const response = await updateUserAvatar(token, avatarId);
       
-      // Atualiza o token com os novos dados
+      // Atualiza com os dados do backend (pode ter mudanças no token)
       const newToken = response.data.token;
-      const updatedUser = buildUserFromBackendData(decodeToken(newToken), newToken);
+      const backendUser = buildUserFromBackendData(decodeToken(newToken), newToken);
       
       setToken(newToken);
-      setUser(updatedUser);
+      setUser(backendUser);
 
-      // Persiste no AsyncStorage e atualiza a data de login (novo token = nova sessão)
+      // Persiste no AsyncStorage
       const currentDate = new Date().toISOString();
       await AsyncStorage.setItem(TOKEN_KEY, newToken);
-      await AsyncStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(backendUser));
       await AsyncStorage.setItem(LOGIN_DATE_KEY, currentDate);
 
-      console.log('AuthContext - Avatar atualizado e persistido:', avatarId);
+      console.log('AuthContext - Avatar confirmado no backend:', avatarId);
     } catch (error) {
-      console.error('AuthContext - Erro ao atualizar avatar:', error);
+      // Se der erro, reverte para o usuário anterior
+      console.error('AuthContext - Erro ao atualizar avatar no backend, revertendo:', error);
+      setUser(previousUser);
+      await AsyncStorage.setItem(USER_KEY, JSON.stringify(previousUser));
       throw error;
     }
   };

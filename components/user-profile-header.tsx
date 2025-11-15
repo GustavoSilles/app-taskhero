@@ -18,6 +18,7 @@ interface UserProfileHeaderProps {
   taskCoins: number;
   goalsCompleted: number;
   onEditPress?: () => void;
+  isLoadingStats?: boolean;
 }
 
 export function UserProfileHeader({
@@ -30,6 +31,7 @@ export function UserProfileHeader({
   taskCoins,
   goalsCompleted,
   onEditPress,
+  isLoadingStats = false,
 }: UserProfileHeaderProps) {
   const { colorScheme } = useTheme();
   const colors = Colors[colorScheme ?? 'light'];
@@ -119,7 +121,7 @@ export function UserProfileHeader({
 
         <View style={styles.statItem}>
           <ThemedText type="defaultSemiBold" style={styles.statValue}>
-            {goalsCompleted}
+            {isLoadingStats ? '...' : goalsCompleted}
           </ThemedText>
           <TextTicker
             style={[styles.statLabel, { color: colors.text }]}

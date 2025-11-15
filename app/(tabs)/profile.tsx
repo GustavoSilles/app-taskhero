@@ -30,13 +30,13 @@ export default function ProfileScreen() {
   const [badges, setBadges] = useState<EmblemaResponse[]>([]);
   const [isLoadingBadges, setIsLoadingBadges] = useState(true);
   
-  const [stats, setStats] = useState({
-    total: 0,
-    completed: 0,
-    completedLate: 0,
-    expired: 0,
-    inProgress: 0
-  });
+  const [stats, setStats] = useState<{
+    total: number;
+    completed: number;
+    completedLate: number;
+    expired: number;
+    inProgress: number;
+  } | null>(null);
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
   // Carrega as estatísticas ao montar o componente
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
     };
 
     loadStats();
-  }, [token, toast]);
+  }, [token]);
 
   useEffect(() => {
     const loadBadges = async () => {
@@ -76,7 +76,7 @@ export default function ProfileScreen() {
     };
 
     loadBadges();
-  }, [token, toast]);
+  }, [token]);
 
   useEffect(() => {
     const unsubscribe = websocketService.subscribe((data) => {
@@ -102,8 +102,8 @@ export default function ProfileScreen() {
   }, [token]);
 
   // Calcular estatísticas
-  const totalGoals = stats.total;
-  const completedGoals = stats.completed + stats.completedLate;
+  const totalGoals = stats?.total ?? 0;
+  const completedGoals = (stats?.completed ?? 0) + (stats?.completedLate ?? 0);
 
   const handleEditProfile = () => {
     editProfileBottomSheetRef.current?.snapToIndex(0);
@@ -194,6 +194,7 @@ export default function ProfileScreen() {
             taskCoins={user?.taskCoins || 0}
             goalsCompleted={completedGoals}
             onEditPress={handleEditProfile}
+            isLoadingStats={isLoadingStats}
           />
         </View>
 
@@ -213,7 +214,7 @@ export default function ProfileScreen() {
           <StatsCard
             icon="checkmark.circle.fill"
             label="No Prazo"
-            value={isLoadingStats ? '...' : stats.completed}
+            value={isLoadingStats ? '...' : (stats?.completed ?? 0)}
             color={colors.success}
           />
         </View>
@@ -222,13 +223,13 @@ export default function ProfileScreen() {
           <StatsCard
             icon="clock"
             label="Com Atraso"
-            value={isLoadingStats ? '...' : stats.completedLate}
+            value={isLoadingStats ? '...' : (stats?.completedLate ?? 0)}
             color={colors.warning}
           />
           <StatsCard
             icon="xmark.circle.fill"
             label="Expiradas"
-            value={isLoadingStats ? '...' : stats.expired}
+            value={isLoadingStats ? '...' : (stats?.expired ?? 0)}
             color={colors.error}
           />
         </View>

@@ -5,6 +5,7 @@ import {
   Animated,
   Dimensions,
   TouchableOpacity,
+  Easing,
 } from 'react-native';
 import { ThemedText } from './themed-text';
 import { IconSymbol } from './ui/icon-symbol';
@@ -33,18 +34,52 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
   const colors = Colors[colorScheme ?? 'light'];
   const translateY = React.useRef(new Animated.Value(-100)).current;
   const opacity = React.useRef(new Animated.Value(0)).current;
+  const scale = React.useRef(new Animated.Value(0.9)).current;
+
+  const hideToast = React.useCallback(() => {
+    Animated.parallel([
+      Animated.timing(translateY, {
+        toValue: -100,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(scale, {
+        toValue: 0.9,
+        duration: 250,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      onHide();
+    });
+  }, [translateY, opacity, scale, onHide]);
 
   useEffect(() => {
     // Animação de entrada
     Animated.parallel([
-      Animated.timing(translateY, {
+      Animated.spring(translateY, {
         toValue: 0,
-        duration: 300,
+        tension: 65,
+        friction: 8,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: 1,
         duration: 300,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.spring(scale, {
+        toValue: 1,
+        tension: 65,
+        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
@@ -55,25 +90,7 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
     }, duration);
 
     return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const hideToast = () => {
-    Animated.parallel([
-      Animated.timing(translateY, {
-        toValue: -100,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-      Animated.timing(opacity, {
-        toValue: 0,
-        duration: 250,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onHide();
-    });
-  };
+  }, [translateY, opacity, scale, duration, hideToast]);
 
   const getToastConfig = () => {
     switch (type) {
@@ -109,7 +126,7 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
         {
           backgroundColor: config.backgroundColor,
           opacity,
-          transform: [{ translateY }],
+          transform: [{ translateY }, { scale }],
         },
       ]}
     >
