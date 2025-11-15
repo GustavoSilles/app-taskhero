@@ -26,6 +26,10 @@ export default function ProfileScreen() {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   
+  // Refs para controlar carregamento único
+  const badgesLoadedRef = useRef(false);
+  const statsLoadedRef = useRef(false);
+  
   // Estado para emblemas
   const [badges, setBadges] = useState<EmblemaResponse[]>([]);
   const [isLoadingBadges, setIsLoadingBadges] = useState(true);
@@ -44,10 +48,17 @@ export default function ProfileScreen() {
     const loadStats = async () => {
       if (!token) return;
       
+      // Só carrega se ainda não carregou
+      if (statsLoadedRef.current) {
+        setIsLoadingStats(false);
+        return;
+      }
+      
       try {
         setIsLoadingStats(true);
         const response = await getUserStats(token);
         setStats(response.data);
+        statsLoadedRef.current = true;
       } catch (error) {
         console.error('Erro ao carregar estatísticas:', error);
         toast.error('Erro', 'Não foi possível carregar as estatísticas');
@@ -64,10 +75,17 @@ export default function ProfileScreen() {
     const loadBadges = async () => {
       if (!token) return;
       
+      // Só carrega se ainda não carregou
+      if (badgesLoadedRef.current) {
+        setIsLoadingBadges(false);
+        return;
+      }
+      
       try {
         setIsLoadingBadges(true);
         const response = await listUnlockedBadges(token);
         setBadges(response.data);
+        badgesLoadedRef.current = true;
       } catch (error: any) {
         console.error('Erro ao carregar emblemas:', error);
         toast.error('Erro', 'Não foi possível carregar os emblemas');
