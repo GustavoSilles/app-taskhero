@@ -11,7 +11,7 @@ import { useToast } from '@/contexts/toast-context';
 import { useState, useRef, useEffect } from 'react';
 import { AVATARS } from '@/constants/avatars';
 import { BuyAvatarModal } from '@/components/buy-avatar-modal';
-import { buyAvatar, updateUserAvatar, listAllBadges, EmblemaResponse } from '@/services/api';
+import { buyAvatar, listAllBadges, EmblemaResponse } from '@/services/api';
 import { websocketService } from '@/services/websocket';
 
 export default function RewardsScreen() {
@@ -60,6 +60,7 @@ export default function RewardsScreen() {
     };
 
     loadBadges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   // Listener WebSocket para atualizar emblemas quando desbloqueados

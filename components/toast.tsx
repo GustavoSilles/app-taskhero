@@ -5,7 +5,7 @@ import {
   Animated,
   Dimensions,
   TouchableOpacity,
-  Easing,
+  PanResponder,
 } from 'react-native';
 import { ThemedText } from './themed-text';
 import { IconSymbol } from './ui/icon-symbol';
@@ -34,55 +34,81 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
   const colors = Colors[colorScheme ?? 'light'];
   const translateY = React.useRef(new Animated.Value(-100)).current;
   const opacity = React.useRef(new Animated.Value(0)).current;
-  const scale = React.useRef(new Animated.Value(0.9)).current;
+  const pan = React.useRef(new Animated.ValueXY()).current;
 
   const hideToast = React.useCallback(() => {
     Animated.parallel([
       Animated.timing(translateY, {
         toValue: -100,
         duration: 250,
-        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: 0,
         duration: 250,
-        easing: Easing.in(Easing.ease),
         useNativeDriver: true,
-      }),
-      Animated.timing(scale, {
-        toValue: 0.9,
-        duration: 250,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
+      })
     ]).start(() => {
       onHide();
     });
-  }, [translateY, opacity, scale, onHide]);
+  }, [translateY, opacity, onHide]);
+
+  const panResponder = React.useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        // Só ativa se arrastar verticalmente mais de 5 pixels
+        return Math.abs(gestureState.dy) > 5;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        // Só permite arrastar para cima (dy negativo)
+        if (gestureState.dy < 0) {
+          pan.setValue({ x: 0, y: gestureState.dy });
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        // Se arrastou mais de 50 pixels para cima, fecha o toast
+        if (gestureState.dy < -50) {
+          Animated.parallel([
+            Animated.timing(pan, {
+              toValue: { x: 0, y: -150 },
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            Animated.timing(opacity, {
+              toValue: 0,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start(() => {
+            onHide();
+          });
+        } else {
+          // Volta para a posição original
+          Animated.spring(pan, {
+            toValue: { x: 0, y: 0 },
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+    })
+  ).current;
 
   useEffect(() => {
     // Animação de entrada
     Animated.parallel([
-      Animated.spring(translateY, {
+      Animated.timing(translateY, {
         toValue: 0,
-        tension: 65,
-        friction: 8,
+        duration: 300,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
         toValue: 1,
         duration: 300,
-        easing: Easing.out(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.spring(scale, {
-        toValue: 1,
-        tension: 65,
-        friction: 8,
         useNativeDriver: true,
       }),
     ]).start();
+
 
     // Auto hide
     const timer = setTimeout(() => {
@@ -90,7 +116,7 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
     }, duration);
 
     return () => clearTimeout(timer);
-  }, [translateY, opacity, scale, duration, hideToast]);
+  }, [translateY, opacity, duration, hideToast]);
 
   const getToastConfig = () => {
     switch (type) {
@@ -121,12 +147,16 @@ export function Toast({ type, title, message, duration = 3000, onHide }: ToastPr
 
   return (
     <Animated.View
+      {...panResponder.panHandlers}
       style={[
         styles.container,
         {
           backgroundColor: config.backgroundColor,
           opacity,
-          transform: [{ translateY }, { scale }],
+          transform: [
+            { translateY },
+            { translateY: pan.y }
+          ],
         },
       ]}
     >

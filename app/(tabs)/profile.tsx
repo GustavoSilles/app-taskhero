@@ -57,6 +57,7 @@ export default function ProfileScreen() {
     };
 
     loadStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function ProfileScreen() {
     };
 
     loadBadges();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   useEffect(() => {

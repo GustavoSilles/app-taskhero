@@ -26,6 +26,11 @@ interface GoalsContextData {
   deleteGoal: (goalId: string) => Promise<void>;
   concludeGoal: (goalId: string) => Promise<Goal>;
   refreshGoals: () => Promise<void>;
+  selectedFilter: GoalStatus | 'all';
+  selectedSort: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status';
+  setSelectedFilter: (filter: GoalStatus | 'all') => void;
+  setSelectedSort: (sort: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status') => void;
+  hasInitialized: boolean;
 }
 
 const GoalsContext = createContext<GoalsContextData>({} as GoalsContextData);
@@ -37,6 +42,21 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
+  const [selectedFilter, setSelectedFilterState] = useState<GoalStatus | 'all'>('all');
+  const [selectedSort, setSelectedSortState] = useState<'data_fim' | 'createdAt' | 'progress_calculated' | 'status'>('createdAt');
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  const setSelectedFilter = useCallback((filter: GoalStatus | 'all') => {
+    setSelectedFilterState(filter);
+    setHasInitialized(false);
+    setCurrentPage(1);
+  }, []);
+
+  const setSelectedSort = useCallback((sort: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status') => {
+    setSelectedSortState(sort);
+    setHasInitialized(false);
+    setCurrentPage(1);
+  }, []);
 
   const convertBackendGoalToFrontend = (backendGoal: any): Goal => {
     if (!backendGoal) {
@@ -131,6 +151,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       setCurrentPage(response.data.page || page);
       setTotalPages(response.data.totalPages || 1);
       setTotalItems(response.data.totalMetas || 0);
+      setHasInitialized(true);
     } catch (error: any) {
       console.error('GoalsContext - Erro ao buscar metas:', error);
       throw error;
@@ -230,8 +251,9 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   }, [token]);
 
   const refreshGoals = useCallback(async () => {
-    await fetchGoals(currentPage);
-  }, [fetchGoals, currentPage]);
+    const status = selectedFilter === 'all' ? null : selectedFilter;
+    await fetchGoals(currentPage, status, selectedSort, 'DESC', false);
+  }, [fetchGoals, currentPage, selectedFilter, selectedSort]);
 
   const getGoalById = useCallback(async (goalId: string, forceRefresh: boolean = false): Promise<Goal> => {
     if (!token) throw new Error('Usuário não autenticado');
@@ -280,6 +302,11 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         deleteGoal,
         concludeGoal,
         refreshGoals,
+        selectedFilter,
+        selectedSort,
+        setSelectedFilter,
+        setSelectedSort,
+        hasInitialized,
       }}>
       {children}
     </GoalsContext.Provider>

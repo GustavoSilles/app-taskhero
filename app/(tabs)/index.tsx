@@ -21,10 +21,21 @@ export default function HomeScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const toast = useToast();
   const { user } = useAuth();
-  const { goals, isLoading, fetchGoals, createGoal: createGoalAPI, currentPage, totalPages, totalItems } = useGoals();
+  const {
+    goals,
+    isLoading,
+    fetchGoals,
+    createGoal: createGoalAPI,
+    currentPage,
+    totalPages,
+    totalItems,
+    selectedFilter,
+    selectedSort,
+    setSelectedFilter,
+    setSelectedSort,
+    hasInitialized,
+  } = useGoals();
 
-  const [currentFilter, setCurrentFilter] = useState<GoalStatus | 'all'>('all');
-  const [currentSort, setCurrentSort] = useState<'data_fim' | 'createdAt' | 'progress_calculated' | 'status'>('createdAt');
   const [showFilters, setShowFilters] = useState(false);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   
@@ -33,29 +44,31 @@ export default function HomeScreen() {
 
   // Carrega metas ao montar o componente e quando filtro/ordenação mudam
   useEffect(() => {
-    if (user) {
-      const status = currentFilter === 'all' ? null : currentFilter;
-      fetchGoals(1, status, currentSort, 'DESC', false);
+    if (!user || hasInitialized) {
+      return;
     }
-  }, [user, currentFilter, currentSort, fetchGoals]);
+
+    const status = selectedFilter === 'all' ? null : selectedFilter;
+    fetchGoals(1, status, selectedSort, 'DESC', false);
+  }, [user, hasInitialized, selectedFilter, selectedSort, fetchGoals]);
 
   const hasMoreGoals = currentPage < totalPages;
 
   // Resetar página quando mudar filtro ou ordenação
   const handleFilterChange = useCallback((filter: GoalStatus | 'all') => {
-    setCurrentFilter(filter);
-  }, []);
+    setSelectedFilter(filter);
+  }, [setSelectedFilter]);
 
   const handleSortChange = useCallback((sort: 'data_fim' | 'createdAt' | 'progress_calculated' | 'status') => {
-    setCurrentSort(sort);
-  }, []);
+    setSelectedSort(sort);
+  }, [setSelectedSort]);
 
   const handleLoadMore = useCallback(() => {
     if (!isLoading && hasMoreGoals) {
-      const status = currentFilter === 'all' ? null : currentFilter;
-      fetchGoals(currentPage + 1, status, currentSort, 'DESC', true);
+      const status = selectedFilter === 'all' ? null : selectedFilter;
+      fetchGoals(currentPage + 1, status, selectedSort, 'DESC', true);
     }
-  }, [currentPage, hasMoreGoals, isLoading, currentFilter, currentSort, fetchGoals]);
+  }, [currentPage, hasMoreGoals, isLoading, selectedFilter, selectedSort, fetchGoals]);
 
   // Funções para abrir/fechar Bottom Sheet
   const handleOpenGoalBottomSheet = useCallback(() => {
@@ -130,8 +143,8 @@ export default function HomeScreen() {
 
         {showFilters && (
           <FilterBar
-            currentFilter={currentFilter}
-            currentSort={currentSort}
+            currentFilter={selectedFilter}
+            currentSort={selectedSort}
             onFilterChange={handleFilterChange}
             onSortChange={handleSortChange}
           />
@@ -139,23 +152,23 @@ export default function HomeScreen() {
 
         {goals.length === 0 ? (
           <EmptyState
-            icon={currentFilter !== 'all' ? "magnifyingglass" : "flag"}
+            icon={selectedFilter !== 'all' ? "magnifyingglass" : "flag"}
             title={
               isLoading 
                 ? "Carregando..." 
-                : currentFilter !== 'all' 
+                : selectedFilter !== 'all' 
                   ? "Nenhuma meta com este filtro" 
                   : "Pronto para começar sua jornada?"
             }
             description={
               isLoading 
                 ? "Buscando suas metas..." 
-                : currentFilter !== 'all'
+                : selectedFilter !== 'all'
                   ? "Tente ajustar os filtros ou crie uma nova meta para começar."
                   : "Defina sua primeira meta e transforme seus sonhos em conquistas! Cada grande jornada começa com um simples passo."
             }
-            actionLabel={currentFilter !== 'all' ? "Limpar Filtros" : "Criar Minha Primeira Meta"}
-            onActionPress={currentFilter !== 'all' ? () => setCurrentFilter('all') : handleOpenGoalBottomSheet}
+            actionLabel={selectedFilter !== 'all' ? "Limpar Filtros" : "Criar Minha Primeira Meta"}
+            onActionPress={selectedFilter !== 'all' ? () => setSelectedFilter('all') : handleOpenGoalBottomSheet}
           />
         ) : (
           <>
