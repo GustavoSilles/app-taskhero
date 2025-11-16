@@ -78,7 +78,7 @@ O projeto é dividido em duas partes principais:
 4. **Flash** - 350 coins
 5. **Aranha Venom** - 350 coins
 6. **Homem-Aranha** - 400 coins
-7. **Aranha Preto** - 400 coins
+7. **Miles Morales** - 400 coins
 8. **Kratos** - 500 coins
 9. **Demolidor** - 1000 coins
 10. **Batman** - 1000 coins
