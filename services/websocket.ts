@@ -3,7 +3,7 @@
 
 type WebSocketMessage = {
   // Tipo da mensagem
-  type?: 'EMBLEMA_DESBLOQUEADO' | 'USER_UPDATE' | 'AVATAR_UNLOCKED' | 'STATS_UPDATE';
+  type?: 'EMBLEMA_DESBLOQUEADO' | 'USER_UPDATE' | 'AVATAR_UNLOCKED' | 'STATS_UPDATE' | 'META_EXPIRADA';
   
   // Dados do usuário atualizados
   id?: string;
@@ -16,6 +16,9 @@ type WebSocketMessage = {
   // Notificação genérica
   message?: string;
   titulo?: string;
+  
+  // ID da meta (usado em META_EXPIRADA)
+  meta_id?: number;
   
   // Dados específicos (emblema, avatar, etc)
   data?: {

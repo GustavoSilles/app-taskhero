@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { Goal, GoalStatus } from '@/types';
 import { useAuth } from './auth-context';
 import {
@@ -12,6 +12,7 @@ import {
   UpdateGoalRequest,
   GoalResponse,
 } from '@/services/api';
+import { websocketService } from '@/services/websocket';
 
 interface GoalsContextData {
   goals: Goal[];
@@ -56,6 +57,24 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     setSelectedSortState(sort);
     setHasInitialized(false);
     setCurrentPage(1);
+  }, []);
+
+  // Escuta notificações WebSocket de metas expiradas
+  useEffect(() => {
+    const unsubscribe = websocketService.subscribe((data) => {
+      if (data.type === 'META_EXPIRADA' && data.meta_id) {
+        // Atualiza a meta expirada na lista local
+        setGoals(prev => 
+          prev.map(goal => 
+            goal.id === data.meta_id?.toString()
+              ? { ...goal, status: 'expired' as GoalStatus }
+              : goal
+          )
+        );
+      }
+    });
+
+    return unsubscribe;
   }, []);
 
   const convertBackendGoalToFrontend = (backendGoal: any): Goal => {

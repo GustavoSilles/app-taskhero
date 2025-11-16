@@ -57,6 +57,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user?.id]);
 
   const handleWebSocketMessage = (data: WebSocketMessage) => {
+    // Se é uma notificação de meta expirada
+    if (data.type === 'META_EXPIRADA') {
+      toast.warning(
+        '⏰ Meta Expirada',
+        data.message || 'Uma de suas metas atingiu o prazo final'
+      );
+      return;
+    }
+    
     // Se é uma notificação de emblema desbloqueado
     if (data.type === 'EMBLEMA_DESBLOQUEADO') {
       const emblemaTitle = data.data?.title || data.titulo || 'Novo Emblema';
