@@ -12,12 +12,14 @@ interface ToastContextData {
 
 const ToastContext = createContext<ToastContextData>({} as ToastContextData);
 
+let toastCounter = 0;
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<ToastData[]>([]);
 
   const showToast = useCallback(
     (type: ToastType, title: string, message?: string, duration: number = 3000) => {
-      const id = Date.now().toString();
+      const id = `${Date.now()}-${toastCounter++}`;
       const newToast: ToastData = {
         id,
         type,

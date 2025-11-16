@@ -56,7 +56,7 @@ export const AVATARS: Avatar[] = [
   { 
     id: '7', 
     image: require('@/assets/imagens-heroes/aranha-preto.webp'), 
-    name: 'Aranha Preto', 
+    name: 'Miles Morales', 
     unlocked: false, 
     cost: 400 
   },

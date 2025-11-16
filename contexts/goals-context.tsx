@@ -37,7 +37,7 @@ interface GoalsContextData {
 const GoalsContext = createContext<GoalsContextData>({} as GoalsContextData);
 
 export function GoalsProvider({ children }: { children: ReactNode }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -58,6 +58,28 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     setHasInitialized(false);
     setCurrentPage(1);
   }, []);
+
+  // Limpa as metas quando o usuário faz logout ou troca de conta
+  useEffect(() => {
+    if (!user || !token) {
+      console.log('GoalsContext - Limpando metas (usuário deslogado ou token removido)');
+      setGoals([]);
+      setHasInitialized(false);
+      setCurrentPage(1);
+      setTotalPages(1);
+      setTotalItems(0);
+      setSelectedFilterState('all');
+      setSelectedSortState('createdAt');
+    }
+  }, [user, token]);
+
+  // Reseta hasInitialized quando o ID do usuário muda (troca de conta)
+  useEffect(() => {
+    if (user?.id) {
+      console.log('GoalsContext - Novo usuário detectado, resetando inicialização:', user.id);
+      setHasInitialized(false);
+    }
+  }, [user?.id]);
 
   // Escuta notificações WebSocket de metas expiradas
   useEffect(() => {

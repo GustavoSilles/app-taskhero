@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import { Task, TaskPriority, TaskStatus } from '@/types';
 import { useAuth } from './auth-context';
 import {
@@ -26,9 +26,17 @@ interface TasksContextData {
 const TasksContext = createContext<TasksContextData>({} as TasksContextData);
 
 export function TasksProvider({ children }: { children: ReactNode }) {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Limpa as tarefas quando o usuário faz logout ou troca de conta
+  useEffect(() => {
+    if (!user || !token) {
+      console.log('TasksContext - Limpando tarefas (usuário deslogado ou token removido)');
+      setTasks([]);
+    }
+  }, [user, token]);
 
   const convertBackendTaskToFrontend = (backendTask: any): Task => {
     if (!backendTask || !backendTask.id) {

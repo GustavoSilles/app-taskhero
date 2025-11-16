@@ -49,7 +49,13 @@ export default function RewardsScreen() {
       try {
         setIsLoadingBadges(true);
         const response = await listAllBadges(token);
-        setBadges(response.data);
+        // Ordena: emblemas liberados primeiro, depois bloqueados
+        const sortedBadges = response.data.sort((a, b) => {
+          if (a.unlocked && !b.unlocked) return -1;
+          if (!a.unlocked && b.unlocked) return 1;
+          return 0;
+        });
+        setBadges(sortedBadges);
         badgesLoadedRef.current = true;
       } catch (error: any) {
         console.error('Erro ao carregar emblemas:', error);
@@ -69,7 +75,15 @@ export default function RewardsScreen() {
       if (data.type === 'EMBLEMA_DESBLOQUEADO' && token) {
         // Recarrega os emblemas quando um novo for desbloqueado
         listAllBadges(token)
-          .then(response => setBadges(response.data))
+          .then(response => {
+            // Ordena: emblemas liberados primeiro, depois bloqueados
+            const sortedBadges = response.data.sort((a, b) => {
+              if (a.unlocked && !b.unlocked) return -1;
+              if (!a.unlocked && b.unlocked) return 1;
+              return 0;
+            });
+            setBadges(sortedBadges);
+          })
           .catch(error => console.error('Erro ao atualizar emblemas:', error));
       }
     });

@@ -50,7 +50,7 @@ export default function HomeScreen() {
 
     const status = selectedFilter === 'all' ? null : selectedFilter;
     fetchGoals(1, status, selectedSort, 'DESC', false);
-  }, [user, hasInitialized, selectedFilter, selectedSort, fetchGoals]);
+  }, [user?.id, hasInitialized, selectedFilter, selectedSort, fetchGoals]);
 
   const hasMoreGoals = currentPage < totalPages;
 

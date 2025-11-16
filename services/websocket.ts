@@ -55,6 +55,7 @@ class WebSocketService {
       this.ws = new WebSocket(wsUrl);
 
       this.ws.onopen = () => {
+        console.log('✅ WebSocket conectado com sucesso');
         this.reconnectAttempts = 0;
         this.isReconnecting = false;
         this.hasConnectedBefore = true;
@@ -69,37 +70,57 @@ class WebSocketService {
         }
       };
 
-      this.ws.onerror = (error) => {
+      this.ws.onerror = () => {
+        // Silencia erros de conexão - são tratados no onclose
+        // Apenas loga se for a primeira tentativa
         if (!this.hasConnectedBefore && this.reconnectAttempts === 0) {
-          console.error('Erro ao conectar ao WebSocket:', error);
+          console.warn('⚠️ WebSocket indisponível - continuando sem atualizações em tempo real');
         }
-
       };
 
-      this.ws.onclose = () => {
+      this.ws.onclose = (event) => {
         this.ws = null;
-        this.attemptReconnect();
+        
+        // Apenas tenta reconectar se já teve conexão bem-sucedida antes
+        if (this.hasConnectedBefore) {
+          this.attemptReconnect();
+        } else if (this.reconnectAttempts < 2) {
+          // Para primeira conexão, tenta apenas 2 vezes
+          this.attemptReconnect();
+        }
       };
     } catch (error) {
-      // Apenas loga se for tentativa inicial
-      if (!this.isReconnecting) {
-        console.error('Erro ao criar conexão WebSocket:', error);
+      // Silencia erro de criação
+      this.ws = null;
+      
+      if (!this.isReconnecting && this.reconnectAttempts < 2) {
+        this.attemptReconnect();
       }
-      this.attemptReconnect();
     }
   }
 
   private attemptReconnect() {
-    if (this.reconnectAttempts >= this.maxReconnectAttempts || !this.userId) {
+    // Se nunca conectou antes, limita a 2 tentativas
+    const maxAttempts = this.hasConnectedBefore ? this.maxReconnectAttempts : 2;
+    
+    if (this.reconnectAttempts >= maxAttempts || !this.userId) {
+      if (this.reconnectAttempts >= maxAttempts && !this.hasConnectedBefore) {
+        console.log('ℹ️ WebSocket não disponível - app funcionará normalmente sem atualizações em tempo real');
+      }
       return;
     }
 
     this.reconnectAttempts++;
     this.isReconnecting = true;
 
+    // Delay progressivo: 1s, 2s, 4s, 8s, 16s
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts - 1), 16000);
+
     setTimeout(() => {
-      this.connect(this.userId!);
-    }, this.reconnectDelay);
+      if (this.userId) {
+        this.connect(this.userId);
+      }
+    }, delay);
   }
 
   disconnect() {
