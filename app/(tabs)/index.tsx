@@ -44,7 +44,7 @@ export default function HomeScreen() {
 
   // Carrega metas ao montar o componente e quando filtro/ordenação mudam
   useEffect(() => {
-    if (!user || hasInitialized) {
+    if (!user?.id || hasInitialized) {
       return;
     }
 
